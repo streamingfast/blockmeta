@@ -1,0 +1,210 @@
+// Copyright 2019 dfuse Platform Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package blockmeta
+
+import (
+	"context"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/dfuse-io/blockmeta"
+	"github.com/dfuse-io/bstream"
+	"github.com/dfuse-io/dgrpc"
+	"github.com/dfuse-io/dstore"
+	"github.com/dfuse-io/kvdb/eosdb"
+	pbbstream "github.com/dfuse-io/pbgo/dfuse/bstream/v1"
+	pbhealth "github.com/dfuse-io/pbgo/grpc/health/v1"
+	"github.com/dfuse-io/shutter"
+	"github.com/eoscanada/eos-go"
+	"go.uber.org/zap"
+)
+
+var StartupAborted = fmt.Errorf("blockmeta start aborted by terminating signal")
+
+type Config struct {
+	KvdbDSN                 string
+	BlocksStore             string
+	BlockStreamAddr         string
+	ListenAddr              string
+	Protocol                pbbstream.Protocol
+	LiveSource              bool
+	BigtableDB              string
+	EnableReadinessProbe    bool
+	EOSAPIUpstreamAddresses []string
+	EOSAPIExtraAddresses    []string
+}
+
+type App struct {
+	*shutter.Shutter
+	config         *Config
+	ReadyFunc      func()
+	readinessProbe pbhealth.HealthClient
+}
+
+func New(config *Config) *App {
+	return &App{
+		Shutter:   shutter.New(),
+		config:    config,
+		ReadyFunc: func() {},
+	}
+}
+
+func (a *App) Run() error {
+
+	db, err := a.createBlockmetaDB(a.config.Protocol)
+	if err != nil {
+		return err
+	}
+
+	blocksStore, err := dstore.NewDBinStore(a.config.BlocksStore)
+	if err != nil {
+		return fmt.Errorf("failed setting up blocks store: %w", err)
+	}
+
+	var upstreamEOSAPIs []*eos.API
+	var extraEOSAPIs []*eos.API
+
+	if a.config.Protocol == pbbstream.Protocol_EOS {
+		for _, addr := range a.config.EOSAPIUpstreamAddresses {
+			if !strings.HasPrefix(addr, "http") {
+				addr = "http://" + addr
+			}
+			upstreamEOSAPIs = append(upstreamEOSAPIs, eos.New(addr))
+		}
+		for _, addr := range a.config.EOSAPIExtraAddresses {
+			if !strings.HasPrefix(addr, "http") {
+				addr = "http://" + addr
+			}
+			extraEOSAPIs = append(extraEOSAPIs, eos.New(addr))
+		}
+	}
+
+	s := blockmeta.NewServer(a.config.ListenAddr, a.config.BlockStreamAddr, blocksStore, db, upstreamEOSAPIs, extraEOSAPIs, a.config.Protocol)
+
+	a.OnTerminating(func(err error) {
+		s.Shutdown(err)
+	})
+
+	go func() {
+		a.Shutdown(s.BootstrapAndLaunch())
+	}()
+
+	// Move this to where it fits
+	a.ReadyFunc()
+
+	if a.config.EnableReadinessProbe {
+		gs, err := dgrpc.NewInternalClient(a.config.ListenAddr)
+		if err != nil {
+			return fmt.Errorf("cannot create readiness probe")
+		}
+		a.readinessProbe = pbhealth.NewHealthClient(gs)
+	}
+
+	return nil
+}
+
+func (a *App) createBlockmetaDB(protocol pbbstream.Protocol) (blockmeta.BlockmetaDB, error) {
+	var db blockmeta.BlockmetaDB
+
+	err := bstream.DoForProtocol(protocol, map[pbbstream.Protocol]func() error{
+		pbbstream.Protocol_EOS: func() error {
+			eosDBClient, err := eosdb.New(a.config.KvdbDSN)
+			if err != nil {
+				return fmt.Errorf("cound not load EOS db client: %w", err)
+			}
+
+			db = &blockmeta.EOSBlockmetaDB{
+				Driver: eosDBClient,
+			}
+			return nil
+		},
+
+		pbbstream.Protocol_ETH: func() error {
+			return fmt.Errorf("ETH supported temporarily removed")
+		},
+	})
+
+	return db, err
+}
+
+func (a *App) explodeDatabaseConnectionInfo(connectionInfo string) (project, instance, prefix string, err error) {
+	parts := strings.Split(connectionInfo, ":")
+	if len(parts) != 3 {
+		err = fmt.Errorf("database connection info should be <project>:<instance>:<prefix>")
+		return
+	}
+
+	return parts[0], parts[1], parts[2], nil
+}
+func (a *App) getLastWrittenBlock(ctx context.Context, db blockmeta.BlockmetaDB) (string, error) {
+	zlog.Info("getting last written block in kvdb")
+	for {
+		lastWrittenBlockID, err := db.GetLastWrittenBlockID(ctx)
+		if err == nil {
+			zlog.Info("fetched last written block", zap.String("last_written_block_id", lastWrittenBlockID))
+			return lastWrittenBlockID, nil
+		}
+		zlog.Info("failed getting last written block", zap.Error(err))
+
+		select {
+		case <-time.After(5 * time.Second):
+		case <-a.Shutter.Terminating():
+			zlog.Info("getting last written block aborted by terminating signal")
+			return "", StartupAborted
+		}
+	}
+}
+
+func (a *App) getIrrBlockAtNum(ctx context.Context, lastWrittenBlockID string, db blockmeta.BlockmetaDB) (bstream.BlockRef, error) {
+	zlog.Info("get irr block num at")
+	for {
+		libRef, err := db.GetIrreversibleIDAtBlockID(ctx, lastWrittenBlockID)
+		if err == nil {
+			zlog.Info("fetched irr block", zap.String("irr_block_id", libRef.ID()), zap.Uint64("irr_block_num", libRef.Num()))
+			return libRef, nil
+		}
+		zlog.Info("cannot get LIB", zap.Error(err))
+		select {
+		case <-time.After(5 * time.Second):
+		case <-a.Shutter.Terminating():
+			zlog.Info("getting irr block aboard by terminating signal")
+			return nil, StartupAborted
+		}
+
+	}
+}
+
+func (a *App) OnReady(f func()) {
+	a.ReadyFunc = f
+}
+
+func (a *App) IsReady() bool {
+	if a.readinessProbe == nil {
+		return false
+	}
+
+	resp, err := a.readinessProbe.Check(context.Background(), &pbhealth.HealthCheckRequest{})
+	if err != nil {
+		zlog.Info("merger readiness probe error", zap.Error(err))
+		return false
+	}
+
+	if resp.Status == pbhealth.HealthCheckResponse_SERVING {
+		return true
+	}
+
+	return false
+}
