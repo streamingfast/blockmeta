@@ -35,13 +35,12 @@ import (
 var StartupAborted = fmt.Errorf("blockmeta start aborted by terminating signal")
 
 type Config struct {
-	KvdbDSN                 string
-	BlocksStore             string
+	KVDBDSN                 string
+	BlocksStoreURL          string
 	BlockStreamAddr         string
-	ListenAddr              string
+	GRPCListenAddr          string
 	Protocol                pbbstream.Protocol
 	LiveSource              bool
-	BigtableDB              string
 	EnableReadinessProbe    bool
 	EOSAPIUpstreamAddresses []string
 	EOSAPIExtraAddresses    []string
@@ -69,7 +68,7 @@ func (a *App) Run() error {
 		return err
 	}
 
-	blocksStore, err := dstore.NewDBinStore(a.config.BlocksStore)
+	blocksStore, err := dstore.NewDBinStore(a.config.BlocksStoreURL)
 	if err != nil {
 		return fmt.Errorf("failed setting up blocks store: %w", err)
 	}
@@ -92,7 +91,7 @@ func (a *App) Run() error {
 		}
 	}
 
-	s := blockmeta.NewServer(a.config.ListenAddr, a.config.BlockStreamAddr, blocksStore, db, upstreamEOSAPIs, extraEOSAPIs, a.config.Protocol)
+	s := blockmeta.NewServer(a.config.GRPCListenAddr, a.config.BlockStreamAddr, blocksStore, db, upstreamEOSAPIs, extraEOSAPIs, a.config.Protocol)
 
 	a.OnTerminating(func(err error) {
 		s.Shutdown(err)
@@ -106,7 +105,7 @@ func (a *App) Run() error {
 	a.ReadyFunc()
 
 	if a.config.EnableReadinessProbe {
-		gs, err := dgrpc.NewInternalClient(a.config.ListenAddr)
+		gs, err := dgrpc.NewInternalClient(a.config.GRPCListenAddr)
 		if err != nil {
 			return fmt.Errorf("cannot create readiness probe")
 		}
@@ -121,7 +120,7 @@ func (a *App) createBlockmetaDB(protocol pbbstream.Protocol) (blockmeta.Blockmet
 
 	err := bstream.DoForProtocol(protocol, map[pbbstream.Protocol]func() error{
 		pbbstream.Protocol_EOS: func() error {
-			eosDBClient, err := eosdb.New(a.config.KvdbDSN)
+			eosDBClient, err := eosdb.New(a.config.KVDBDSN)
 			if err != nil {
 				return fmt.Errorf("cound not load EOS db client: %w", err)
 			}
