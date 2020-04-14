@@ -6,8 +6,7 @@ require (
 	github.com/dfuse-io/dgrpc v0.0.0-20200406214416-6271093e544c
 	github.com/dfuse-io/dmetrics v0.0.0-20200406214800-499fc7b320ab
 	github.com/dfuse-io/dstore v0.0.0-20200407173215-10b5ced43022
-	github.com/dfuse-io/dtracing v0.0.0-20200406213603-4b0c0063b125
-	github.com/dfuse-io/kvdb v0.0.0-20200407191956-e3308ad697fc
+	github.com/dfuse-io/kvdb v0.0.0-20200414142539-055d6b6fb265
 	github.com/dfuse-io/logging v0.0.0-20200407175011-14021b7a79af
 	github.com/dfuse-io/pbgo v0.0.6-0.20200407175820-b82ffcb63bf6
 	github.com/dfuse-io/shutter v1.4.1-0.20200319040708-c809eec458e6
@@ -16,9 +15,7 @@ require (
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/kr/pretty v0.2.0 // indirect
-	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.4.0
-	go.opencensus.io v0.22.2
 	go.uber.org/atomic v1.6.0
 	go.uber.org/zap v1.14.0
 	google.golang.org/grpc v1.26.0

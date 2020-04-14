@@ -24,7 +24,6 @@ import (
 	"github.com/dfuse-io/bstream"
 	"github.com/dfuse-io/dgrpc"
 	"github.com/dfuse-io/dstore"
-	"github.com/dfuse-io/kvdb/eosdb"
 	pbbstream "github.com/dfuse-io/pbgo/dfuse/bstream/v1"
 	pbhealth "github.com/dfuse-io/pbgo/grpc/health/v1"
 	"github.com/dfuse-io/shutter"
@@ -51,22 +50,19 @@ type App struct {
 	config         *Config
 	ReadyFunc      func()
 	readinessProbe pbhealth.HealthClient
+	db             blockmeta.BlockmetaDB
 }
 
-func New(config *Config) *App {
+func New(config *Config, db blockmeta.BlockmetaDB) *App {
 	return &App{
 		Shutter:   shutter.New(),
 		config:    config,
 		ReadyFunc: func() {},
+		db:        db,
 	}
 }
 
 func (a *App) Run() error {
-
-	db, err := a.createBlockmetaDB(a.config.Protocol)
-	if err != nil {
-		return err
-	}
 
 	blocksStore, err := dstore.NewDBinStore(a.config.BlocksStoreURL)
 	if err != nil {
@@ -91,7 +87,7 @@ func (a *App) Run() error {
 		}
 	}
 
-	s := blockmeta.NewServer(a.config.GRPCListenAddr, a.config.BlockStreamAddr, blocksStore, db, upstreamEOSAPIs, extraEOSAPIs, a.config.Protocol)
+	s := blockmeta.NewServer(a.config.GRPCListenAddr, a.config.BlockStreamAddr, blocksStore, a.db, upstreamEOSAPIs, extraEOSAPIs, a.config.Protocol)
 
 	a.OnTerminating(func(err error) {
 		s.Shutdown(err)
@@ -113,30 +109,6 @@ func (a *App) Run() error {
 	}
 
 	return nil
-}
-
-func (a *App) createBlockmetaDB(protocol pbbstream.Protocol) (blockmeta.BlockmetaDB, error) {
-	var db blockmeta.BlockmetaDB
-
-	err := bstream.DoForProtocol(protocol, map[pbbstream.Protocol]func() error{
-		pbbstream.Protocol_EOS: func() error {
-			eosDBClient, err := eosdb.New(a.config.KVDBDSN)
-			if err != nil {
-				return fmt.Errorf("cound not load EOS db client: %w", err)
-			}
-
-			db = &blockmeta.EOSBlockmetaDB{
-				Driver: eosDBClient,
-			}
-			return nil
-		},
-
-		pbbstream.Protocol_ETH: func() error {
-			return fmt.Errorf("ETH supported temporarily removed")
-		},
-	})
-
-	return db, err
 }
 
 func (a *App) explodeDatabaseConnectionInfo(connectionInfo string) (project, instance, prefix string, err error) {
