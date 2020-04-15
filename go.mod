@@ -1,18 +1,17 @@
 module github.com/dfuse-io/blockmeta
 
 require (
-	github.com/dfuse-io/bstream v0.0.0-20200415033255-07f5a4237424
+	github.com/dfuse-io/bstream v0.0.0-20200415145349-b867db804e41
 	github.com/dfuse-io/derr v0.0.0-20200406214256-c690655246a1
 	github.com/dfuse-io/dgrpc v0.0.0-20200406214416-6271093e544c
 	github.com/dfuse-io/dmetrics v0.0.0-20200406214800-499fc7b320ab
 	github.com/dfuse-io/dstore v0.0.0-20200407173215-10b5ced43022
-	github.com/dfuse-io/kvdb v0.0.0-20200414142539-055d6b6fb265
+	github.com/dfuse-io/kvdb v0.0.0-20200415145138-10866173305f
 	github.com/dfuse-io/logging v0.0.0-20200407175011-14021b7a79af
-	github.com/dfuse-io/pbgo v0.0.6-0.20200407175820-b82ffcb63bf6
+	github.com/dfuse-io/pbgo v0.0.6-0.20200415053022-5b009da68d9c
 	github.com/dfuse-io/shutter v1.4.1-0.20200319040708-c809eec458e6
-	github.com/eoscanada/eos-go v0.9.1-0.20200316043050-4a80cd6ab548
+	github.com/eoscanada/eos-go v0.9.1-0.20200415144303-2adb25bcdeca
 	github.com/golang/protobuf v1.3.4
-	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
