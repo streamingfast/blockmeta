@@ -21,11 +21,6 @@ import (
 	"sync"
 	"time"
 
-	pbblockmeta "github.com/dfuse-io/pbgo/dfuse/blockmeta/v1"
-	pbbstream "github.com/dfuse-io/pbgo/dfuse/bstream/v1"
-	pbheadinfo "github.com/dfuse-io/pbgo/dfuse/headinfo/v1"
-	pbhealth "github.com/dfuse-io/pbgo/grpc/health/v1"
-	"github.com/dfuse-io/shutter"
 	"github.com/dfuse-io/blockmeta/metrics"
 	"github.com/dfuse-io/bstream"
 	"github.com/dfuse-io/bstream/blockstream"
@@ -33,9 +28,14 @@ import (
 	"github.com/dfuse-io/derr"
 	"github.com/dfuse-io/dgrpc"
 	"github.com/dfuse-io/dstore"
-	"github.com/eoscanada/eos-go"
 	"github.com/dfuse-io/kvdb"
 	"github.com/dfuse-io/logging"
+	pbblockmeta "github.com/dfuse-io/pbgo/dfuse/blockmeta/v1"
+	pbbstream "github.com/dfuse-io/pbgo/dfuse/bstream/v1"
+	pbheadinfo "github.com/dfuse-io/pbgo/dfuse/headinfo/v1"
+	pbhealth "github.com/dfuse-io/pbgo/grpc/health/v1"
+	"github.com/dfuse-io/shutter"
+	"github.com/eoscanada/eos-go"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -126,7 +126,7 @@ func (s *server) setupSource(initialStartBlock bstream.BlockRef) {
 		}
 
 		archivedBlockSourceFactory := bstream.SourceFactory(func(h bstream.Handler) bstream.Source {
-			src := bstream.NewFileSource(s.protocol, s.blocksStore, startBlockRef.Num(), 2, nil, h)
+			src := bstream.NewFileSource(s.blocksStore, startBlockRef.Num(), 2, nil, h)
 			return src
 		})
 
