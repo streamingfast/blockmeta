@@ -1,7 +1,9 @@
-blockmeta
----------
+# blockmeta
+[![reference](https://img.shields.io/badge/godoc-reference-5272B4.svg?style=flat-square)](https://pkg.go.dev/github.com/dfuse-io/blockmeta)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 This service is the spinal cord of a network, regarding network and blocks status.
+It is part of **[dfuse](https://github.com/dfuse-io/dfuse)**.
 
 Multiple services rely on this one to have a quick understanding of
 the state of the chain, blocks, and history from a consensus
