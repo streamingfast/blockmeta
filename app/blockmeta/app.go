@@ -40,7 +40,6 @@ type Config struct {
 	GRPCListenAddr          string
 	Protocol                pbbstream.Protocol
 	LiveSource              bool
-	EnableReadinessProbe    bool
 	EOSAPIUpstreamAddresses []string
 	EOSAPIExtraAddresses    []string
 }
@@ -100,13 +99,11 @@ func (a *App) Run() error {
 	// Move this to where it fits
 	a.ReadyFunc()
 
-	if a.config.EnableReadinessProbe {
-		gs, err := dgrpc.NewInternalClient(a.config.GRPCListenAddr)
-		if err != nil {
-			return fmt.Errorf("cannot create readiness probe")
-		}
-		a.readinessProbe = pbhealth.NewHealthClient(gs)
+	gs, err := dgrpc.NewInternalClient(a.config.GRPCListenAddr)
+	if err != nil {
+		return fmt.Errorf("cannot create readiness probe")
 	}
+	a.readinessProbe = pbhealth.NewHealthClient(gs)
 
 	return nil
 }
@@ -120,6 +117,7 @@ func (a *App) explodeDatabaseConnectionInfo(connectionInfo string) (project, ins
 
 	return parts[0], parts[1], parts[2], nil
 }
+
 func (a *App) getLastWrittenBlock(ctx context.Context, db blockmeta.BlockmetaDB) (string, error) {
 	zlog.Info("getting last written block in kvdb")
 	for {
