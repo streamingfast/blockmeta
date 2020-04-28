@@ -21,8 +21,10 @@ import (
 	"time"
 
 	"github.com/dfuse-io/blockmeta"
+	"github.com/dfuse-io/blockmeta/metrics"
 	"github.com/dfuse-io/bstream"
 	"github.com/dfuse-io/dgrpc"
+	"github.com/dfuse-io/dmetrics"
 	"github.com/dfuse-io/dstore"
 	pbbstream "github.com/dfuse-io/pbgo/dfuse/bstream/v1"
 	pbhealth "github.com/dfuse-io/pbgo/grpc/health/v1"
@@ -63,6 +65,7 @@ func New(config *Config, db blockmeta.BlockmetaDB) *App {
 }
 
 func (a *App) Run() error {
+	dmetrics.Register(metrics.MetricSet)
 
 	blocksStore, err := dstore.NewDBinStore(a.config.BlocksStoreURL)
 	if err != nil {

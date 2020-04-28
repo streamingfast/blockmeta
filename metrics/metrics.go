@@ -18,17 +18,9 @@ import (
 	"github.com/dfuse-io/dmetrics"
 )
 
-var metrics = dmetrics.NewSet()
-var ErrorCount = metrics.NewCounter("error_count", "number of requests resulting in error (including not_found)")
-var RequestCount = metrics.NewCounter("request_count", "number of requests made to this service")
-var MapSize = metrics.NewGauge("map_size", "size of live blocks map")
-var HeadTimeDrift = metrics.NewHeadTimeDrift("blockmeta")
-var HeadBlockNumber = metrics.NewHeadBlockNumber("blockmeta")
-
-func init() {
-	dmetrics.Register(metrics)
-}
-
-func ServeMetrics() {
-	dmetrics.Serve(":9102")
-}
+var MetricSet = dmetrics.NewSet()
+var ErrorCount = MetricSet.NewCounter("error_count", "number of requests resulting in error (including not_found)")
+var RequestCount = MetricSet.NewCounter("request_count", "number of requests made to this service")
+var MapSize = MetricSet.NewGauge("map_size", "size of live blocks map")
+var HeadTimeDrift = MetricSet.NewHeadTimeDrift("blockmeta")
+var HeadBlockNumber = MetricSet.NewHeadBlockNumber("blockmeta")

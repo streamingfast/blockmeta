@@ -12,7 +12,6 @@ require (
 	github.com/dfuse-io/shutter v1.4.1-0.20200319040708-c809eec458e6
 	github.com/eoscanada/eos-go v0.9.1-0.20200316043050-4a80cd6ab548
 	github.com/golang/protobuf v1.3.4
-	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
