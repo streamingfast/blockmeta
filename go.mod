@@ -6,7 +6,7 @@ require (
 	github.com/dfuse-io/dgrpc v0.0.0-20200406214416-6271093e544c
 	github.com/dfuse-io/dmetrics v0.0.0-20200406214800-499fc7b320ab
 	github.com/dfuse-io/dstore v0.1.0
-	github.com/dfuse-io/kvdb v0.0.0-20200415145138-10866173305f
+	github.com/dfuse-io/kvdb v0.0.0-20200520211319-cbf4776ac2a3
 	github.com/dfuse-io/logging v0.0.0-20200407175011-14021b7a79af
 	github.com/dfuse-io/pbgo v0.0.6-0.20200415053022-5b009da68d9c
 	github.com/dfuse-io/shutter v1.4.1-0.20200319040708-c809eec458e6
