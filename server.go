@@ -120,6 +120,7 @@ func (s *server) getInitialStartBlock() (bstream.BlockRef, error) {
 
 func (s *server) setupSource(initialStartBlock bstream.BlockRef) {
 
+	zlog.Info("setting up source, waiting to see block", zap.String("block_id", initialStartBlock.ID()), zap.Uint64("block_num", initialStartBlock.Num()))
 	sf := bstream.SourceFromRefFactory(func(startBlockRef bstream.BlockRef, h bstream.Handler) bstream.Source {
 		if startBlockRef.ID() == "" {
 			startBlockRef = initialStartBlock
@@ -152,7 +153,7 @@ func (s *server) setupSource(initialStartBlock bstream.BlockRef) {
 	})
 
 	handler := bstream.Handler(s)
-	forkable := forkable.New(handler, forkable.WithName("blockmeta"))
+	forkable := forkable.New(handler, forkable.WithName("blockmeta"), forkable.WithInclusiveLIB(initialStartBlock))
 	s.src = bstream.NewEternalSource(sf, forkable)
 }
 
