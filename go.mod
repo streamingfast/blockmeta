@@ -8,10 +8,10 @@ require (
 	github.com/dfuse-io/dstore v0.1.0
 	github.com/dfuse-io/kvdb v0.0.0-20200520211319-cbf4776ac2a3
 	github.com/dfuse-io/logging v0.0.0-20200407175011-14021b7a79af
-	github.com/dfuse-io/pbgo v0.0.6-0.20200415053022-5b009da68d9c
+	github.com/dfuse-io/pbgo v0.0.6-0.20200602163822-677d66ead419
 	github.com/dfuse-io/shutter v1.4.1-0.20200319040708-c809eec458e6
 	github.com/eoscanada/eos-go v0.9.1-0.20200415144303-2adb25bcdeca
-	github.com/golang/protobuf v1.3.4
+	github.com/golang/protobuf v1.4.2
 	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
