@@ -142,7 +142,7 @@ func headInfoFromBlockstream(ctx context.Context, conn *grpc.ClientConn, apis []
 		return nil, err
 	}
 
-	if head.LibID == "" {
+	if head.LibID == "" && len(apis) > 0 {
 		id, err := eosNumToIDFromAPI(ctx, head.LibNum, apis)
 		if err != nil {
 			return nil, err
