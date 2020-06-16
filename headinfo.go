@@ -38,10 +38,14 @@ func (s *server) GetHeadInfo(ctx context.Context, req *pbheadinfo.HeadInfoReques
 		return headInfoFromBlockstream(ctx, s.blockstreamConn, append(s.upstreamEOSAPIs, s.extraEOSAPIs...))
 
 	case pbheadinfo.HeadInfoRequest_NETWORK:
-		if s.protocol != pbbstream.Protocol_EOS {
-			return nil, fmt.Errorf("unimplemented headinfo source for this protocol: %d", s.protocol)
+		switch s.protocol {
+		case pbbstream.Protocol_EOS:
+			return headInfoFromAPI(ctx, s.upstreamEOSAPIs)
+		case pbbstream.Protocol_ETH:
+			return s.headInfoFromLocal() //todo: fix this when we make blockmeta chain agnostic
 		}
-		return headInfoFromAPI(ctx, s.upstreamEOSAPIs)
+
+		return nil, fmt.Errorf("unimplemented headinfo source for this protocol: %d", s.protocol)
 
 	default:
 		return nil, fmt.Errorf("unimplemented headinfo source")
