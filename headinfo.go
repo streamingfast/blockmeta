@@ -28,6 +28,7 @@ import (
 
 var BlockNumToIDFromAPI func(ctx context.Context, blockNum uint64) (string, error)
 var GetHeadInfoFromAPI func(ctx context.Context) (*pbheadinfo.HeadInfoResponse, error)
+var GetIrrIDFromAPI func(ctx context.Context, blockNum uint64, libNum uint64) (string, error)
 
 // GetHeadInfo can be called even when not ready, it will simply relay info from where it can
 func (s *server) GetHeadInfo(ctx context.Context, req *pbheadinfo.HeadInfoRequest) (*pbheadinfo.HeadInfoResponse, error) {
@@ -82,7 +83,7 @@ func headInfoFromBlockstream(ctx context.Context, conn *grpc.ClientConn) (*pbhea
 	}
 
 	if head.LibID == "" {
-		id, err := BlockNumToIDFromAPI(ctx, head.LibNum)
+		id, err := GetIrrIDFromAPI(ctx, head.HeadNum, head.LibNum)
 		if err != nil {
 			return nil, err
 		}
