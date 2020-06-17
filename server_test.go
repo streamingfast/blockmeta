@@ -20,10 +20,10 @@ import (
 	"testing"
 	"time"
 
-	pbblockmeta "github.com/dfuse-io/pbgo/dfuse/blockmeta/v1"
-	pbbstream "github.com/dfuse-io/pbgo/dfuse/bstream/v1"
 	"github.com/dfuse-io/bstream"
 	"github.com/dfuse-io/bstream/forkable"
+	pbblockmeta "github.com/dfuse-io/pbgo/dfuse/blockmeta/v1"
+	pbbstream "github.com/dfuse-io/pbgo/dfuse/bstream/v1"
 	"github.com/eoscanada/eos-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -100,7 +100,7 @@ func TestServer_InLongestChain(t *testing.T) {
 func setupServer() (*server, *fakeDB, *bstream.TestSource) {
 	srcFactory := bstream.NewTestSourceFactory()
 	db := &fakeDB{}
-	s := NewServer("", "", nil, db, nil, nil, pbbstream.Protocol_EOS)
+	s := NewServer("", "", nil, db, pbbstream.Protocol_EOS)
 	s.initialStartBlockID = "00000001a"
 	frkable := forkable.New(s, forkable.WithName("blockmeta"))
 	srcFactory.NewSourceFromRef(bstream.NewBlockRefFromID("00000001a"), frkable)

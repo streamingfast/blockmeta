@@ -53,9 +53,6 @@ type server struct {
 
 	keepDurationAfterLib time.Duration
 
-	upstreamEOSAPIs []*eos.API
-	extraEOSAPIs    []*eos.API
-
 	blockTimes map[string]time.Time
 	mapLock    sync.Mutex
 
@@ -80,8 +77,6 @@ func NewServer(
 	blockstreamAddr string,
 	blocksStore dstore.Store,
 	db BlockmetaDB,
-	upstreamEOSAPIs []*eos.API,
-	extraEOSAPIs []*eos.API,
 	protocol pbbstream.Protocol) *server {
 	return &server{
 		addr:                 addr,
@@ -89,8 +84,6 @@ func NewServer(
 		blockstreamAddr:      blockstreamAddr,
 		blocksStore:          blocksStore,
 		db:                   db,
-		upstreamEOSAPIs:      upstreamEOSAPIs,
-		extraEOSAPIs:         extraEOSAPIs,
 		protocol:             protocol,
 
 		blockTimes: make(map[string]time.Time),
