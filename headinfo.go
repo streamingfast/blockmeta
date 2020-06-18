@@ -62,13 +62,15 @@ func (s *server) headInfoFromLocal() (*pbheadinfo.HeadInfoResponse, error) {
 		return nil, err
 	}
 
-	return &pbheadinfo.HeadInfoResponse{
+	hi := &pbheadinfo.HeadInfoResponse{
 		LibNum:   lib.Num(),
 		LibID:    lib.ID(),
 		HeadNum:  head.Num(),
 		HeadID:   head.ID(),
 		HeadTime: headTimestamp,
-	}, nil
+	}
+	zlog.Debug("head info from local returning", zap.Reflect("head_info", hi))
+	return hi, nil
 }
 
 func headInfoFromBlockstream(ctx context.Context, conn *grpc.ClientConn) (*pbheadinfo.HeadInfoResponse, error) {
@@ -77,19 +79,21 @@ func headInfoFromBlockstream(ctx context.Context, conn *grpc.ClientConn) (*pbhea
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	head, err := headinfoCli.GetHeadInfo(ctx, &pbheadinfo.HeadInfoRequest{}, grpc.WaitForReady(false))
+	hi, err := headinfoCli.GetHeadInfo(ctx, &pbheadinfo.HeadInfoRequest{}, grpc.WaitForReady(false))
 	if err != nil {
 		return nil, err
 	}
 
-	if head.LibID == "" {
-		id, err := GetIrrIDFromAPI(ctx, head.HeadNum, head.LibNum)
+	if hi.LibID == "" {
+		id, err := GetIrrIDFromAPI(ctx, hi.HeadNum, hi.LibNum)
 		if err != nil {
 			return nil, err
 		}
-		head.LibID = id
+		zlog.Debug("head info lib was empty, called api and received", zap.String("lib_from_api", id))
+		hi.LibID = id
 	}
-	return head, nil
+	zlog.Debug("head info from stream returning", zap.Reflect("head_info", hi))
+	return hi, nil
 }
 
 func Timestamp(ts *tspb.Timestamp) time.Time {
