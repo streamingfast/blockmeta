@@ -1,7 +1,7 @@
 module github.com/dfuse-io/blockmeta
 
 require (
-	github.com/dfuse-io/bstream v0.0.0-20200427161155-5bc64e86c005
+	github.com/dfuse-io/bstream v0.0.0-20200616134354-62d63f98d5c1
 	github.com/dfuse-io/derr v0.0.0-20200406214256-c690655246a1
 	github.com/dfuse-io/dgrpc v0.0.0-20200406214416-6271093e544c
 	github.com/dfuse-io/dmetrics v0.0.0-20200406214800-499fc7b320ab

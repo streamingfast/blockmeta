@@ -21,6 +21,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/eoscanada/eos-go"
+
 	"github.com/dfuse-io/blockmeta/metrics"
 	"github.com/dfuse-io/bstream"
 	"github.com/dfuse-io/bstream/blockstream"
@@ -35,7 +37,8 @@ import (
 	pbheadinfo "github.com/dfuse-io/pbgo/dfuse/headinfo/v1"
 	pbhealth "github.com/dfuse-io/pbgo/grpc/health/v1"
 	"github.com/dfuse-io/shutter"
-	"github.com/eoscanada/eos-go"
+
+	//"github.com/eoscanada/eos-go"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -139,7 +142,7 @@ func (s *server) setupSource(initialStartBlock bstream.BlockRef) {
 			liveSourceFactory,
 			h,
 			bstream.JoiningSourceTargetBlockID(startBlockRef.ID()),
-			bstream.JoiningSourceTargetBlockNum(2),
+			bstream.JoiningSourceTargetBlockNum(bstream.GetProtocolFirstStreamableBlock),
 			bstream.JoiningSourceName("blockmeta"),
 		)
 		return js
@@ -166,7 +169,7 @@ func (s *server) ProcessBlock(block *bstream.Block, obj interface{}) error {
 		s.headLock.Unlock()
 		s.mapLock.Lock()
 		defer s.mapLock.Unlock()
-
+		zlog.Debug("processing new/redo block", zap.Uint64("block_num", block.Num()), zap.String("step", fObj.Step.String()))
 		metrics.MapSize.Inc()
 		metrics.HeadBlockNumber.SetUint64(block.Num())
 		metrics.HeadTimeDrift.SetBlockTime(blockTime)
@@ -190,6 +193,7 @@ func (s *server) ProcessBlock(block *bstream.Block, obj interface{}) error {
 		delete(s.blockTimes, blockID)
 
 	case forkable.StepIrreversible:
+		zlog.Debug("processing irreversible block", zap.Uint64("block_num", block.Num()), zap.String("step", fObj.Step.String()))
 		if !s.ready.Load() && blockID == s.initialStartBlockID {
 			zlog.Info("seen initial start block, setting ready")
 			s.ready.Store(true)

@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/dfuse-io/bstream"
+
 	pbheadinfo "github.com/dfuse-io/pbgo/dfuse/headinfo/v1"
 	"github.com/golang/protobuf/ptypes"
 	tspb "github.com/golang/protobuf/ptypes/timestamp"
@@ -79,20 +81,31 @@ func headInfoFromBlockstream(ctx context.Context, conn *grpc.ClientConn) (*pbhea
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	hi, err := headinfoCli.GetHeadInfo(ctx, &pbheadinfo.HeadInfoRequest{}, grpc.WaitForReady(false))
+	var err error
+	var hi *pbheadinfo.HeadInfoResponse
+	hi, err = headinfoCli.GetHeadInfo(ctx, &pbheadinfo.HeadInfoRequest{}, grpc.WaitForReady(false))
 	if err != nil {
 		return nil, err
 	}
 
+	zlog.Info("got head info from cli", zap.Uint64("lib_num", hi.LibNum), zap.String("lib_id", hi.LibID))
+
 	if hi.LibID == "" {
-		id, err := GetIrrIDFromAPI(ctx, hi.HeadNum, hi.LibNum)
-		if err != nil {
-			return nil, err
+		for {
+			apiHeadInfo, err := GetHeadInfoFromAPI(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if apiHeadInfo.LibNum == bstream.GetProtocolGenesisBlock {
+				zlog.Debug("got genesis block as lib block. retrying")
+				time.Sleep(2 * time.Second)
+				continue
+			}
+			hi = apiHeadInfo
+			break
 		}
-		zlog.Debug("head info lib was empty, called api and received", zap.String("lib_from_api", id))
-		hi.LibID = id
 	}
-	zlog.Debug("head info from stream returning", zap.Reflect("head_info", hi))
+	zlog.Debug("head info from stream returning", zap.Uint64("lib_block_num", hi.LibNum), zap.String("lib_id", hi.LibID))
 	return hi, nil
 }
 
