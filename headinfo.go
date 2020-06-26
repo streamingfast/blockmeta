@@ -19,8 +19,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dfuse-io/bstream"
-
 	pbheadinfo "github.com/dfuse-io/pbgo/dfuse/headinfo/v1"
 	"github.com/golang/protobuf/ptypes"
 	tspb "github.com/golang/protobuf/ptypes/timestamp"
@@ -88,18 +86,13 @@ func headInfoFromBlockstream(ctx context.Context, conn *grpc.ClientConn) (*pbhea
 		return nil, err
 	}
 
-	zlog.Info("got head info from cli", zap.Uint64("lib_num", hi.LibNum), zap.String("lib_id", hi.LibID))
+	zlog.Info("got head info lib from cli", zap.Uint64("lib_num", hi.LibNum), zap.String("lib_id", hi.LibID), zap.String("head_id", hi.HeadID), zap.Uint64("head_num", hi.HeadNum))
 
 	if hi.LibID == "" {
 		for {
 			apiHeadInfo, err := GetHeadInfoFromAPI(ctx)
 			if err != nil {
 				return nil, err
-			}
-			if apiHeadInfo.LibNum == bstream.GetProtocolGenesisBlock {
-				zlog.Debug("got genesis block as lib block. retrying")
-				time.Sleep(2 * time.Second)
-				continue
 			}
 			hi = apiHeadInfo
 			break

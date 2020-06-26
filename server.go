@@ -174,13 +174,24 @@ func (s *server) ProcessBlock(block *bstream.Block, obj interface{}) error {
 
 		s.blockTimes[blockID] = blockTime
 
-		if !s.ready.Load() && blockID == s.initialStartBlockID {
-			zlog.Info("seen initial start block (as new, but assuming irreversible), setting ready")
-			s.libLock.Lock()
-			s.lib = block
+		if !s.ready.Load() {
+			if blockID == s.initialStartBlockID {
+				zlog.Info("seen initial start block (as new, but assuming irreversible), setting ready")
+				s.libLock.Lock()
+				s.lib = block
+				s.libLock.Unlock()
+				s.ready.Store(true)
+			} else if block.Num() == bstream.GetProtocolFirstStreamableBlock && block.PreviousID() == s.initialStartBlockID {
+				zlog.Info("starting on first streamable block with LIB set to genesis block")
+				s.libLock.Lock()
+				s.lib = &bstream.Block{
+					Id:     s.initialStartBlockID,
+					Number: block.Num() - 1,
+				}
+				s.libLock.Unlock()
+				s.ready.Store(true)
+			}
 
-			s.libLock.Unlock()
-			s.ready.Store(true)
 		}
 
 	case forkable.StepUndo:
