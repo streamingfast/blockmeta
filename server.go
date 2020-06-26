@@ -71,7 +71,7 @@ type server struct {
 	ready *atomic.Bool
 }
 
-var GetBlockNumFromID func(id string) uint64
+var GetBlockNumFromID func(ctx context.Context, id string) (uint64, error)
 
 func NewServer(
 	addr string,
@@ -372,7 +372,10 @@ func (s *server) numToIDFromEosDB(ctx context.Context, blockNum uint64) (id stri
 }
 
 func (s *server) getIrreversibleFromDB(ctx context.Context, blockID string) (isIrreversible bool, err error) {
-	blockNum := GetBlockNumFromID(blockID)
+	blockNum, err := GetBlockNumFromID(ctx, blockID)
+	if err != nil {
+		return false, err
+	}
 	if blockNum > s.forkDBRef.LIBNum() { // ensure this doesn't happen by gating this with forkable.IsBehindLIB(blockNum)
 		return false, fmt.Errorf("cannot look up blocks after lib in here")
 	}
@@ -426,7 +429,10 @@ func (s *server) GetBlockInLongestChain(ctx context.Context, in *pbblockmeta.Get
 }
 
 func (s *server) InLongestChain(ctx context.Context, in *pbblockmeta.InLongestChainRequest) (*pbblockmeta.InLongestChainResponse, error) {
-	blockNum := GetBlockNumFromID(in.BlockID)
+	blockNum, err := GetBlockNumFromID(ctx, in.BlockID)
+	if err != nil {
+		return nil, err
+	}
 	if err := s.checkReady(); err != nil {
 		return nil, err
 	}
@@ -438,7 +444,7 @@ func (s *server) InLongestChain(ctx context.Context, in *pbblockmeta.InLongestCh
 		return out, ErrNotImplemented
 	}
 
-	if s.forkDBRef.IsBehindLIB(GetBlockNumFromID(in.BlockID)) {
+	if s.forkDBRef.IsBehindLIB(blockNum) {
 		zlogger.Debug("InLongestChain requested with block behind lib", zap.Uint64("block_num", blockNum))
 
 		s.mapLock.Lock()
