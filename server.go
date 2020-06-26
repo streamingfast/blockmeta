@@ -21,8 +21,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/eoscanada/eos-go"
-
 	"github.com/dfuse-io/blockmeta/metrics"
 	"github.com/dfuse-io/bstream"
 	"github.com/dfuse-io/bstream/blockstream"
@@ -37,8 +35,6 @@ import (
 	pbheadinfo "github.com/dfuse-io/pbgo/dfuse/headinfo/v1"
 	pbhealth "github.com/dfuse-io/pbgo/grpc/health/v1"
 	"github.com/dfuse-io/shutter"
-
-	//"github.com/eoscanada/eos-go"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -74,6 +70,8 @@ type server struct {
 	addr  string
 	ready *atomic.Bool
 }
+
+var GetBlockNumFromID func(id string) uint64
 
 func NewServer(
 	addr string,
@@ -373,8 +371,8 @@ func (s *server) numToIDFromEosDB(ctx context.Context, blockNum uint64) (id stri
 	return irrBlockRef.ID(), nil
 }
 
-func (s *server) getIrreversibleFromEosDB(ctx context.Context, blockID string) (isIrreversible bool, err error) {
-	blockNum := uint64(eos.BlockNum(blockID))
+func (s *server) getIrreversibleFromDB(ctx context.Context, blockID string) (isIrreversible bool, err error) {
+	blockNum := GetBlockNumFromID(blockID)
 	if blockNum > s.forkDBRef.LIBNum() { // ensure this doesn't happen by gating this with forkable.IsBehindLIB(blockNum)
 		return false, fmt.Errorf("cannot look up blocks after lib in here")
 	}
@@ -428,6 +426,7 @@ func (s *server) GetBlockInLongestChain(ctx context.Context, in *pbblockmeta.Get
 }
 
 func (s *server) InLongestChain(ctx context.Context, in *pbblockmeta.InLongestChainRequest) (*pbblockmeta.InLongestChainResponse, error) {
+	blockNum := GetBlockNumFromID(in.BlockID)
 	if err := s.checkReady(); err != nil {
 		return nil, err
 	}
@@ -439,8 +438,8 @@ func (s *server) InLongestChain(ctx context.Context, in *pbblockmeta.InLongestCh
 		return out, ErrNotImplemented
 	}
 
-	if s.forkDBRef.IsBehindLIB(uint64(eos.BlockNum(in.BlockID))) {
-		zlogger.Debug("InLongestChain requested with block behind lib", zap.Uint32("block_num", eos.BlockNum(in.BlockID)))
+	if s.forkDBRef.IsBehindLIB(GetBlockNumFromID(in.BlockID)) {
+		zlogger.Debug("InLongestChain requested with block behind lib", zap.Uint64("block_num", blockNum))
 
 		s.mapLock.Lock()
 		_, found := s.blockTimes[in.BlockID] // from local irreversible buffer
@@ -453,7 +452,7 @@ func (s *server) InLongestChain(ctx context.Context, in *pbblockmeta.InLongestCh
 			return out, nil
 		}
 
-		found, err := s.getIrreversibleFromEosDB(ctx, in.BlockID) // fallback on eosDB
+		found, err := s.getIrreversibleFromDB(ctx, in.BlockID) // fallback on eosDB
 		if err != nil {
 			return nil, err
 		}
@@ -466,7 +465,7 @@ func (s *server) InLongestChain(ctx context.Context, in *pbblockmeta.InLongestCh
 	}
 
 	s.headLock.RLock()
-	b := s.forkDBRef.BlockInCurrentChain(s.headBlock, uint64(eos.BlockNum(in.BlockID)))
+	b := s.forkDBRef.BlockInCurrentChain(s.headBlock, blockNum)
 	s.headLock.RUnlock()
 
 	if b.ID() == in.BlockID {

@@ -10,7 +10,6 @@ require (
 	github.com/dfuse-io/logging v0.0.0-20200407175011-14021b7a79af
 	github.com/dfuse-io/pbgo v0.0.6-0.20200415053022-5b009da68d9c
 	github.com/dfuse-io/shutter v1.4.1-0.20200319040708-c809eec458e6
-	github.com/eoscanada/eos-go v0.9.1-0.20200415144303-2adb25bcdeca
 	github.com/golang/protobuf v1.3.4
 	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/kr/pretty v0.2.0 // indirect
