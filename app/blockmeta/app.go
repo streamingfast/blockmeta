@@ -29,21 +29,18 @@ import (
 	pbbstream "github.com/dfuse-io/pbgo/dfuse/bstream/v1"
 	pbhealth "github.com/dfuse-io/pbgo/grpc/health/v1"
 	"github.com/dfuse-io/shutter"
-	"github.com/eoscanada/eos-go"
 	"go.uber.org/zap"
 )
 
 var StartupAborted = fmt.Errorf("blockmeta start aborted by terminating signal")
 
 type Config struct {
-	KVDBDSN                 string
-	BlocksStoreURL          string
-	BlockStreamAddr         string
-	GRPCListenAddr          string
-	Protocol                pbbstream.Protocol
-	LiveSource              bool
-	EOSAPIUpstreamAddresses []string
-	EOSAPIExtraAddresses    []string
+	KVDBDSN         string
+	BlocksStoreURL  string
+	BlockStreamAddr string
+	GRPCListenAddr  string
+	Protocol        pbbstream.Protocol
+	LiveSource      bool
 }
 
 type App struct {
@@ -71,25 +68,7 @@ func (a *App) Run() error {
 		return fmt.Errorf("failed setting up blocks store: %w", err)
 	}
 
-	var upstreamEOSAPIs []*eos.API
-	var extraEOSAPIs []*eos.API
-
-	if a.config.Protocol == pbbstream.Protocol_EOS {
-		for _, addr := range a.config.EOSAPIUpstreamAddresses {
-			if !strings.HasPrefix(addr, "http") {
-				addr = "http://" + addr
-			}
-			upstreamEOSAPIs = append(upstreamEOSAPIs, eos.New(addr))
-		}
-		for _, addr := range a.config.EOSAPIExtraAddresses {
-			if !strings.HasPrefix(addr, "http") {
-				addr = "http://" + addr
-			}
-			extraEOSAPIs = append(extraEOSAPIs, eos.New(addr))
-		}
-	}
-
-	s := blockmeta.NewServer(a.config.GRPCListenAddr, a.config.BlockStreamAddr, blocksStore, a.db, upstreamEOSAPIs, extraEOSAPIs, a.config.Protocol)
+	s := blockmeta.NewServer(a.config.GRPCListenAddr, a.config.BlockStreamAddr, blocksStore, a.db, a.config.Protocol)
 
 	a.OnTerminating(func(err error) {
 		s.Shutdown(err)

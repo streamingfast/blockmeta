@@ -16,15 +16,16 @@ package blockmeta
 
 import (
 	"context"
+	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"testing"
 	"time"
 
-	pbblockmeta "github.com/dfuse-io/pbgo/dfuse/blockmeta/v1"
-	pbbstream "github.com/dfuse-io/pbgo/dfuse/bstream/v1"
 	"github.com/dfuse-io/bstream"
 	"github.com/dfuse-io/bstream/forkable"
-	"github.com/eoscanada/eos-go"
+	pbblockmeta "github.com/dfuse-io/pbgo/dfuse/blockmeta/v1"
+	pbbstream "github.com/dfuse-io/pbgo/dfuse/bstream/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -100,7 +101,7 @@ func TestServer_InLongestChain(t *testing.T) {
 func setupServer() (*server, *fakeDB, *bstream.TestSource) {
 	srcFactory := bstream.NewTestSourceFactory()
 	db := &fakeDB{}
-	s := NewServer("", "", nil, db, nil, nil, pbbstream.Protocol_EOS)
+	s := NewServer("", "", nil, db, pbbstream.Protocol_EOS)
 	s.initialStartBlockID = "00000001a"
 	frkable := forkable.New(s, forkable.WithName("blockmeta"))
 	srcFactory.NewSourceFromRef(bstream.NewBlockRefFromID("00000001a"), frkable)
@@ -325,21 +326,32 @@ func (db fakeDB) GetLastWrittenBlockID(ctx context.Context) (string, error) {
 }
 
 func (db fakeDB) GetIrreversibleIDAtBlockNum(ctx context.Context, blockNum uint64) (bstream.BlockRef, error) {
-	return bstream.NewBlockRef(db.nextID, uint64(eos.BlockNum(db.nextID))), db.nextError
+	return bstream.NewBlockRef(db.nextID, toBlockNum(db.nextID)), db.nextError
 }
 
 func (db fakeDB) GetIrreversibleIDAtBlockID(ctx context.Context, id string) (bstream.BlockRef, error) {
-	return bstream.NewBlockRef(db.nextID, uint64(eos.BlockNum(db.nextID))), db.nextError
+	return bstream.NewBlockRef(db.nextID, uint64(toBlockNum(db.nextID))), db.nextError
 }
 
 func block(id, prev string, libNum uint64, timestamp time.Time) *bstream.Block {
 	block := &bstream.Block{
 		Id:         id,
-		Number:     uint64(eos.BlockNum(id)),
+		Number:     toBlockNum(id),
 		PreviousId: prev,
 		LibNum:     libNum,
 		Timestamp:  timestamp,
 	}
 
 	return block
+}
+
+func toBlockNum(blockID string) uint64 {
+	if len(blockID) < 8 {
+		return 0
+	}
+	bin, err := hex.DecodeString(blockID[:8])
+	if err != nil {
+		return 0
+	}
+	return binary.BigEndian.Uint64(bin)
 }

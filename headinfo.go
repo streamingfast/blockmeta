@@ -19,14 +19,16 @@ import (
 	"fmt"
 	"time"
 
-	pbbstream "github.com/dfuse-io/pbgo/dfuse/bstream/v1"
 	pbheadinfo "github.com/dfuse-io/pbgo/dfuse/headinfo/v1"
-	"github.com/eoscanada/eos-go"
 	"github.com/golang/protobuf/ptypes"
 	tspb "github.com/golang/protobuf/ptypes/timestamp"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
+
+var BlockNumToIDFromAPI func(ctx context.Context, blockNum uint64) (string, error)
+var GetHeadInfoFromAPI func(ctx context.Context) (*pbheadinfo.HeadInfoResponse, error)
+var GetIrrIDFromAPI func(ctx context.Context, blockNum uint64, libNum uint64) (string, error)
 
 // GetHeadInfo can be called even when not ready, it will simply relay info from where it can
 func (s *server) GetHeadInfo(ctx context.Context, req *pbheadinfo.HeadInfoRequest) (*pbheadinfo.HeadInfoResponse, error) {
@@ -35,13 +37,10 @@ func (s *server) GetHeadInfo(ctx context.Context, req *pbheadinfo.HeadInfoReques
 		if s.ready.Load() {
 			return s.headInfoFromLocal()
 		}
-		return headInfoFromBlockstream(ctx, s.blockstreamConn, append(s.upstreamEOSAPIs, s.extraEOSAPIs...))
+		return headInfoFromBlockstream(ctx, s.blockstreamConn)
 
 	case pbheadinfo.HeadInfoRequest_NETWORK:
-		if s.protocol != pbbstream.Protocol_EOS {
-			return nil, fmt.Errorf("unimplemented headinfo source for this protocol: %d", s.protocol)
-		}
-		return headInfoFromAPI(ctx, s.upstreamEOSAPIs)
+		return GetHeadInfoFromAPI(ctx)
 
 	default:
 		return nil, fmt.Errorf("unimplemented headinfo source")
@@ -63,147 +62,44 @@ func (s *server) headInfoFromLocal() (*pbheadinfo.HeadInfoResponse, error) {
 		return nil, err
 	}
 
-	return &pbheadinfo.HeadInfoResponse{
+	hi := &pbheadinfo.HeadInfoResponse{
 		LibNum:   lib.Num(),
 		LibID:    lib.ID(),
 		HeadNum:  head.Num(),
 		HeadID:   head.ID(),
 		HeadTime: headTimestamp,
-	}, nil
+	}
+	zlog.Debug("head info from local returning", zap.Reflect("head_info", hi))
+	return hi, nil
 }
 
-func headInfoFromAPI(ctx context.Context, eosAPIs []*eos.API) (*pbheadinfo.HeadInfoResponse, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
-	respChan := make(chan *pbheadinfo.HeadInfoResponse)
-	errChan := make(chan error)
-	for _, a := range eosAPIs {
-		api := a
-		go func() {
-			info, err := api.GetInfo(ctx)
-			if err != nil {
-				select {
-				case errChan <- err:
-				case <-ctx.Done():
-				}
-				return
-			}
-			headTimestamp, err := ptypes.TimestampProto(info.HeadBlockTime.Time)
-			if err != nil {
-				zlog.Error("invalid timestamp conversion from head block", zap.Error(err))
-				select {
-				case errChan <- err:
-				case <-ctx.Done():
-				}
-				return
-
-			}
-
-			resp := &pbheadinfo.HeadInfoResponse{
-				LibNum:   uint64(info.LastIrreversibleBlockNum),
-				LibID:    info.LastIrreversibleBlockID.String(),
-				HeadNum:  uint64(info.HeadBlockNum),
-				HeadID:   info.HeadBlockID.String(),
-				HeadTime: headTimestamp,
-			}
-
-			select {
-			case respChan <- resp:
-			case <-ctx.Done():
-			}
-
-		}()
-	}
-	var errors []error
-	for {
-		if len(errors) == len(eosAPIs) {
-			return nil, fmt.Errorf("all APIs failed with errors: %v", errors)
-		}
-		select {
-		case resp := <-respChan:
-			return resp, nil
-		case err := <-errChan:
-			errors = append(errors, err)
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		}
-	}
-}
-
-func headInfoFromBlockstream(ctx context.Context, conn *grpc.ClientConn, apis []*eos.API) (*pbheadinfo.HeadInfoResponse, error) {
+func headInfoFromBlockstream(ctx context.Context, conn *grpc.ClientConn) (*pbheadinfo.HeadInfoResponse, error) {
 	headinfoCli := pbheadinfo.NewHeadInfoClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	head, err := headinfoCli.GetHeadInfo(ctx, &pbheadinfo.HeadInfoRequest{}, grpc.WaitForReady(false))
+	var err error
+	var hi *pbheadinfo.HeadInfoResponse
+	hi, err = headinfoCli.GetHeadInfo(ctx, &pbheadinfo.HeadInfoRequest{}, grpc.WaitForReady(false))
 	if err != nil {
 		return nil, err
 	}
 
-	if head.LibID == "" && len(apis) > 0 {
-		id, err := eosNumToIDFromAPI(ctx, head.LibNum, apis)
-		if err != nil {
-			return nil, err
-		}
-		head.LibID = id
-	}
-	return head, nil
-}
+	zlog.Info("got head info lib from cli", zap.Uint64("lib_num", hi.LibNum), zap.String("lib_id", hi.LibID), zap.String("head_id", hi.HeadID), zap.Uint64("head_num", hi.HeadNum))
 
-func eosNumToIDFromAPI(ctx context.Context, blockNum uint64, eosAPIs []*eos.API) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	if blockNum < 2 {
-		return "", fmt.Errorf("trying to get block ID below block 2 on EOS")
-	}
-	respChan := make(chan string)
-	errChan := make(chan error)
-	for _, a := range eosAPIs {
-		api := a
-		go func() {
-			blk, err := api.GetBlockByNum(ctx, uint32(blockNum))
-			if err != nil || blk == nil {
-				select {
-				case errChan <- err:
-				case <-ctx.Done():
-				}
-				return
-			}
-
-			id, err := blk.BlockID()
+	if hi.LibID == "" {
+		for {
+			apiHeadInfo, err := GetHeadInfoFromAPI(ctx)
 			if err != nil {
-				select {
-				case errChan <- err:
-				case <-ctx.Done():
-				}
-				return
-
+				return nil, err
 			}
-
-			select {
-			case respChan <- id.String():
-			case <-ctx.Done():
-			}
-
-		}()
-	}
-	var errors []error
-	for {
-		if len(errors) == len(eosAPIs) {
-			return "", fmt.Errorf("all EOS APIs failed with errors: %v", errors)
-		}
-		select {
-		case resp := <-respChan:
-			return resp, nil
-		case err := <-errChan:
-			errors = append(errors, err)
-		case <-ctx.Done():
-			return "", ctx.Err()
+			hi = apiHeadInfo
+			break
 		}
 	}
+	zlog.Debug("head info from stream returning", zap.Uint64("lib_block_num", hi.LibNum), zap.String("lib_id", hi.LibID))
+	return hi, nil
 }
 
 func Timestamp(ts *tspb.Timestamp) time.Time {

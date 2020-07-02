@@ -35,7 +35,6 @@ import (
 	pbheadinfo "github.com/dfuse-io/pbgo/dfuse/headinfo/v1"
 	pbhealth "github.com/dfuse-io/pbgo/grpc/health/v1"
 	"github.com/dfuse-io/shutter"
-	"github.com/eoscanada/eos-go"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -52,9 +51,6 @@ type server struct {
 	libLock   sync.RWMutex
 
 	keepDurationAfterLib time.Duration
-
-	upstreamEOSAPIs []*eos.API
-	extraEOSAPIs    []*eos.API
 
 	blockTimes map[string]time.Time
 	mapLock    sync.Mutex
@@ -75,13 +71,13 @@ type server struct {
 	ready *atomic.Bool
 }
 
+var GetBlockNumFromID func(ctx context.Context, id string) (uint64, error)
+
 func NewServer(
 	addr string,
 	blockstreamAddr string,
 	blocksStore dstore.Store,
 	db BlockmetaDB,
-	upstreamEOSAPIs []*eos.API,
-	extraEOSAPIs []*eos.API,
 	protocol pbbstream.Protocol) *server {
 	return &server{
 		addr:                 addr,
@@ -89,8 +85,6 @@ func NewServer(
 		blockstreamAddr:      blockstreamAddr,
 		blocksStore:          blocksStore,
 		db:                   db,
-		upstreamEOSAPIs:      upstreamEOSAPIs,
-		extraEOSAPIs:         extraEOSAPIs,
 		protocol:             protocol,
 
 		blockTimes: make(map[string]time.Time),
@@ -146,7 +140,7 @@ func (s *server) setupSource(initialStartBlock bstream.BlockRef) {
 			liveSourceFactory,
 			h,
 			bstream.JoiningSourceTargetBlockID(startBlockRef.ID()),
-			bstream.JoiningSourceTargetBlockNum(2),
+			bstream.JoiningSourceTargetBlockNum(bstream.GetProtocolFirstStreamableBlock),
 			bstream.JoiningSourceName("blockmeta"),
 		)
 		return js
@@ -173,20 +167,31 @@ func (s *server) ProcessBlock(block *bstream.Block, obj interface{}) error {
 		s.headLock.Unlock()
 		s.mapLock.Lock()
 		defer s.mapLock.Unlock()
-
+		zlog.Debug("processing new/redo block", zap.Uint64("block_num", block.Num()), zap.String("step", fObj.Step.String()))
 		metrics.MapSize.Inc()
 		metrics.HeadBlockNumber.SetUint64(block.Num())
 		metrics.HeadTimeDrift.SetBlockTime(blockTime)
 
 		s.blockTimes[blockID] = blockTime
 
-		if !s.ready.Load() && blockID == s.initialStartBlockID {
-			zlog.Info("seen initial start block (as new, but assuming irreversible), setting ready")
-			s.libLock.Lock()
-			s.lib = block
+		if !s.ready.Load() {
+			if blockID == s.initialStartBlockID {
+				zlog.Info("seen initial start block (as new, but assuming irreversible), setting ready")
+				s.libLock.Lock()
+				s.lib = block
+				s.libLock.Unlock()
+				s.ready.Store(true)
+			} else if block.Num() == bstream.GetProtocolFirstStreamableBlock && block.PreviousID() == s.initialStartBlockID {
+				zlog.Info("starting on first streamable block with LIB set to genesis block")
+				s.libLock.Lock()
+				s.lib = &bstream.Block{
+					Id:     s.initialStartBlockID,
+					Number: block.Num() - 1,
+				}
+				s.libLock.Unlock()
+				s.ready.Store(true)
+			}
 
-			s.libLock.Unlock()
-			s.ready.Store(true)
 		}
 
 	case forkable.StepUndo:
@@ -197,6 +202,7 @@ func (s *server) ProcessBlock(block *bstream.Block, obj interface{}) error {
 		delete(s.blockTimes, blockID)
 
 	case forkable.StepIrreversible:
+		zlog.Debug("processing irreversible block", zap.Uint64("block_num", block.Num()), zap.String("step", fObj.Step.String()))
 		if !s.ready.Load() && blockID == s.initialStartBlockID {
 			zlog.Info("seen initial start block, setting ready")
 			s.ready.Store(true)
@@ -376,8 +382,11 @@ func (s *server) numToIDFromEosDB(ctx context.Context, blockNum uint64) (id stri
 	return irrBlockRef.ID(), nil
 }
 
-func (s *server) getIrreversibleFromEosDB(ctx context.Context, blockID string) (isIrreversible bool, err error) {
-	blockNum := uint64(eos.BlockNum(blockID))
+func (s *server) getIrreversibleFromDB(ctx context.Context, blockID string) (isIrreversible bool, err error) {
+	blockNum, err := GetBlockNumFromID(ctx, blockID)
+	if err != nil {
+		return false, err
+	}
 	if blockNum > s.forkDBRef.LIBNum() { // ensure this doesn't happen by gating this with forkable.IsBehindLIB(blockNum)
 		return false, fmt.Errorf("cannot look up blocks after lib in here")
 	}
@@ -431,6 +440,10 @@ func (s *server) GetBlockInLongestChain(ctx context.Context, in *pbblockmeta.Get
 }
 
 func (s *server) InLongestChain(ctx context.Context, in *pbblockmeta.InLongestChainRequest) (*pbblockmeta.InLongestChainResponse, error) {
+	blockNum, err := GetBlockNumFromID(ctx, in.BlockID)
+	if err != nil {
+		return nil, err
+	}
 	if err := s.checkReady(); err != nil {
 		return nil, err
 	}
@@ -442,8 +455,8 @@ func (s *server) InLongestChain(ctx context.Context, in *pbblockmeta.InLongestCh
 		return out, ErrNotImplemented
 	}
 
-	if s.forkDBRef.IsBehindLIB(uint64(eos.BlockNum(in.BlockID))) {
-		zlogger.Debug("InLongestChain requested with block behind lib", zap.Uint32("block_num", eos.BlockNum(in.BlockID)))
+	if s.forkDBRef.IsBehindLIB(blockNum) {
+		zlogger.Debug("InLongestChain requested with block behind lib", zap.Uint64("block_num", blockNum))
 
 		s.mapLock.Lock()
 		_, found := s.blockTimes[in.BlockID] // from local irreversible buffer
@@ -456,7 +469,7 @@ func (s *server) InLongestChain(ctx context.Context, in *pbblockmeta.InLongestCh
 			return out, nil
 		}
 
-		found, err := s.getIrreversibleFromEosDB(ctx, in.BlockID) // fallback on eosDB
+		found, err := s.getIrreversibleFromDB(ctx, in.BlockID) // fallback on eosDB
 		if err != nil {
 			return nil, err
 		}
@@ -469,7 +482,7 @@ func (s *server) InLongestChain(ctx context.Context, in *pbblockmeta.InLongestCh
 	}
 
 	s.headLock.RLock()
-	b := s.forkDBRef.BlockInCurrentChain(s.headBlock, uint64(eos.BlockNum(in.BlockID)))
+	b := s.forkDBRef.BlockInCurrentChain(s.headBlock, blockNum)
 	s.headLock.RUnlock()
 
 	if b.ID() == in.BlockID {
