@@ -1,7 +1,7 @@
 module github.com/dfuse-io/blockmeta
 
 require (
-	github.com/dfuse-io/bstream v0.0.0-20200616134354-62d63f98d5c1
+	github.com/dfuse-io/bstream v0.0.2-0.20200703210323-f92a36d42ed3
 	github.com/dfuse-io/derr v0.0.0-20200406214256-c690655246a1
 	github.com/dfuse-io/dgrpc v0.0.0-20200406214416-6271093e544c
 	github.com/dfuse-io/dmetrics v0.0.0-20200406214800-499fc7b320ab
@@ -26,4 +26,3 @@ replace github.com/blendle/zapdriver => github.com/karixtech/zapdriver v1.1.7-0.
 replace github.com/census-instrumentation/opencensus-proto v0.1.0-0.20181214143942-ba49f56771b8 => github.com/census-instrumentation/opencensus-proto v0.0.3-0.20181214143942-ba49f56771b8
 
 go 1.13
-
