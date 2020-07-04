@@ -34,7 +34,7 @@ var blockDateLayout = "2006-01-02T15:04:05.000"
 var refTime = time.Date(2019, 01, 01, 20, 00, 00, 500000000, time.UTC)
 
 func TestServer_InLongestChain(t *testing.T) {
-
+	GetBlockNumFromID = testGetBlockNumFromID
 	s, db, src := setupServer()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -326,17 +326,17 @@ func (db fakeDB) GetLastWrittenBlockID(ctx context.Context) (string, error) {
 }
 
 func (db fakeDB) GetIrreversibleIDAtBlockNum(ctx context.Context, blockNum uint64) (bstream.BlockRef, error) {
-	return bstream.NewBlockRef(db.nextID, toBlockNum(db.nextID)), db.nextError
+	return bstream.NewBlockRef(db.nextID, uint64(testToBlockNum(db.nextID))), db.nextError
 }
 
 func (db fakeDB) GetIrreversibleIDAtBlockID(ctx context.Context, id string) (bstream.BlockRef, error) {
-	return bstream.NewBlockRef(db.nextID, uint64(toBlockNum(db.nextID))), db.nextError
+	return bstream.NewBlockRef(db.nextID, uint64(testToBlockNum(db.nextID))), db.nextError
 }
 
 func block(id, prev string, libNum uint64, timestamp time.Time) *bstream.Block {
 	block := &bstream.Block{
 		Id:         id,
-		Number:     toBlockNum(id),
+		Number:     uint64(testToBlockNum(id)),
 		PreviousId: prev,
 		LibNum:     libNum,
 		Timestamp:  timestamp,
@@ -345,7 +345,12 @@ func block(id, prev string, libNum uint64, timestamp time.Time) *bstream.Block {
 	return block
 }
 
-func toBlockNum(blockID string) uint64 {
+func testGetBlockNumFromID(ctx context.Context, blockID string) (uint64, error) {
+	return uint64(testToBlockNum(blockID)), nil
+}
+
+// BlockNum extracts the block number (or height) from a hex-encoded block ID.
+func testToBlockNum(blockID string) uint32 {
 	if len(blockID) < 8 {
 		return 0
 	}
@@ -353,5 +358,5 @@ func toBlockNum(blockID string) uint64 {
 	if err != nil {
 		return 0
 	}
-	return binary.BigEndian.Uint64(bin)
+	return binary.BigEndian.Uint32(bin)
 }
