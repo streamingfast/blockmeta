@@ -139,6 +139,7 @@ func (s *server) setupSource(initialStartBlock bstream.BlockRef) {
 			archivedBlockSourceFactory,
 			liveSourceFactory,
 			h,
+			zlog,
 			bstream.JoiningSourceTargetBlockID(startBlockRef.ID()),
 			bstream.JoiningSourceTargetBlockNum(bstream.GetProtocolFirstStreamableBlock),
 			bstream.JoiningSourceName("blockmeta"),
@@ -310,11 +311,13 @@ func (s *server) lowestTime() (lowestTime time.Time) {
 }
 
 func (s *server) NumToID(ctx context.Context, in *pbblockmeta.NumToIDRequest) (*pbblockmeta.BlockIDResponse, error) {
+	zlog.Info("num to id called", zap.Uint64("block_num", in.BlockNum))
 	if err := s.checkReady(); err != nil {
 		return nil, err
 	}
 	out := &pbblockmeta.BlockIDResponse{}
 	if s.forkDBRef.IsBehindLIB(in.BlockNum) {
+		zlog.Info("behind lib", zap.Uint64("block_num", in.BlockNum))
 		id, err := s.numToIDFromEosDB(ctx, in.BlockNum)
 		if err != nil {
 			return out, err
@@ -376,7 +379,13 @@ func (s *server) numToIDFromEosDB(ctx context.Context, blockNum uint64) (id stri
 	}
 
 	if irrBlockRef.Num() != blockNum {
-		return "", ErrDBOutOfSync
+		zlog.Info("database out of sync", zap.Uint64("wanted_block_num", blockNum), zap.Uint64("found block num", irrBlockRef.Num()))
+		id, err := BlockNumToIDFromAPI(ctx, blockNum)
+		if err != nil {
+			return "", err
+		}
+		zlog.Info("got id from api", zap.Uint64("block_num", blockNum), zap.String("block_id", id))
+		return id, nil
 	}
 
 	return irrBlockRef.ID(), nil
