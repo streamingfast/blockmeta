@@ -103,7 +103,7 @@ func setupServer() (*server, *fakeDB, *bstream.TestSource) {
 	db := &fakeDB{}
 	s := NewServer("", "", nil, db, pbbstream.Protocol_EOS)
 	s.initialStartBlockID = "00000001a"
-	frkable := forkable.New(s, forkable.WithName("blockmeta"))
+	frkable := forkable.New(s, forkable.WithLogger(zlog))
 	srcFactory.NewSourceFromRef(bstream.NewBlockRefFromID("00000001a"), frkable)
 	src := <-srcFactory.Created
 	s.src = src

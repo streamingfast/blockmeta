@@ -114,42 +114,42 @@ func (s *server) getInitialStartBlock() (bstream.BlockRef, error) {
 
 func (s *server) setupSource(initialStartBlock bstream.BlockRef) {
 
-	zlog.Info("setting up source, waiting to see block", zap.String("block_id", initialStartBlock.ID()), zap.Uint64("block_num", initialStartBlock.Num()))
+	zlog.Info("setting up source, waiting to see block", zap.Stringer("block", initialStartBlock))
 	sf := bstream.SourceFromRefFactory(func(startBlockRef bstream.BlockRef, h bstream.Handler) bstream.Source {
 		if startBlockRef.ID() == "" {
 			startBlockRef = initialStartBlock
 		}
 
-		archivedBlockSourceFactory := bstream.SourceFactory(func(h bstream.Handler) bstream.Source {
+		fileSourceFactory := bstream.SourceFactory(func(h bstream.Handler) bstream.Source {
 			src := bstream.NewFileSource(s.blocksStore, startBlockRef.Num(), 2, nil, h)
 			return src
 		})
 
-		zlog.Info("new live joining source", zap.Uint64("start_block_num", startBlockRef.Num()))
+		zlog.Info("new live joining source", zap.Stringer("start_block", startBlockRef))
 		liveSourceFactory := bstream.SourceFactory(func(subHandler bstream.Handler) bstream.Source {
 			return blockstream.NewSource(
 				context.Background(),
 				s.blockstreamAddr,
 				200,
 				subHandler,
+				blockstream.WithRequester("blockmeta"),
 			)
 		})
 
 		js := bstream.NewJoiningSource(
-			archivedBlockSourceFactory,
+			fileSourceFactory,
 			liveSourceFactory,
 			h,
-			zlog,
+			bstream.JoiningSourceLogger(zlog),
 			bstream.JoiningSourceTargetBlockID(startBlockRef.ID()),
 			bstream.JoiningSourceTargetBlockNum(bstream.GetProtocolFirstStreamableBlock),
-			bstream.JoiningSourceName("blockmeta"),
 		)
 		return js
 	})
 
 	handler := bstream.Handler(s)
-	forkable := forkable.New(handler, forkable.WithName("blockmeta"), forkable.WithInclusiveLIB(initialStartBlock))
-	s.src = bstream.NewEternalSource(sf, forkable)
+	forkable := forkable.New(handler, forkable.WithLogger(zlog), forkable.WithInclusiveLIB(initialStartBlock))
+	s.src = bstream.NewEternalSource(sf, forkable, bstream.EternalSourceWithLogger(zlog))
 }
 
 func (s *server) ProcessBlock(block *bstream.Block, obj interface{}) error {
