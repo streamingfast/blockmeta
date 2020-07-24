@@ -1,19 +1,22 @@
 module github.com/dfuse-io/blockmeta
 
 require (
-	github.com/dfuse-io/bstream v0.0.2-0.20200707183302-64e1a90497ea
+	github.com/dfuse-io/bstream v0.0.2-0.20200724164826-46514ddda736
 	github.com/dfuse-io/derr v0.0.0-20200406214256-c690655246a1
 	github.com/dfuse-io/dgrpc v0.0.0-20200406214416-6271093e544c
 	github.com/dfuse-io/dmetrics v0.0.0-20200406214800-499fc7b320ab
 	github.com/dfuse-io/dstore v0.1.0
+	github.com/dfuse-io/jsonpb v0.0.0-20200406211248-c5cf83f0e0c0 // indirect
 	github.com/dfuse-io/kvdb v0.0.0-20200520211319-cbf4776ac2a3
 	github.com/dfuse-io/logging v0.0.0-20200407175011-14021b7a79af
-	github.com/dfuse-io/pbgo v0.0.6-0.20200415053022-5b009da68d9c
+	github.com/dfuse-io/pbgo v0.0.6-0.20200722182828-c2634161d5a3
 	github.com/dfuse-io/shutter v1.4.1-0.20200319040708-c809eec458e6
 	github.com/golang/protobuf v1.3.4
 	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/kr/pretty v0.2.0 // indirect
+	github.com/rs/xid v1.2.1 // indirect
 	github.com/stretchr/testify v1.4.0
+	github.com/tidwall/gjson v1.5.0 // indirect
 	go.uber.org/atomic v1.6.0
 	go.uber.org/zap v1.14.0
 	google.golang.org/grpc v1.26.0

@@ -342,7 +342,7 @@ func (s *server) Resolve(ctx context.Context, in *pbblockmeta.ForkResolveRequest
 
 	var topfork bstream.BlockRef
 	if in.Block.BlockNum == 0 && s.protocol == pbbstream.Protocol_EOS {
-		topfork = bstream.BlockRefFromID(in.Block.BlockID)
+		topfork = bstream.NewBlockRefFromID(in.Block.BlockID)
 	} else {
 		topfork = bstream.NewBlockRef(in.Block.BlockID, in.Block.BlockNum)
 	}

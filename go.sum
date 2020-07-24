@@ -88,6 +88,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dfuse-io/bstream v0.0.2-0.20200707183302-64e1a90497ea h1:Xye8NJA3QUR5zOAxqKe5rmZmHWF6f/cBUbXeFR6BMis=
 github.com/dfuse-io/bstream v0.0.2-0.20200707183302-64e1a90497ea/go.mod h1:BHEANTxf3ORDdJdGmQ+lJyX8JqjUH45WGBvBKBaMLQg=
+github.com/dfuse-io/bstream v0.0.2-0.20200724164826-46514ddda736 h1:3VmVpJ57IqQqQ2b+o+me4y3yZVhMdk6DNapsyhVO9Cw=
+github.com/dfuse-io/bstream v0.0.2-0.20200724164826-46514ddda736/go.mod h1:DD1RDqq50aBHDXZLfSv/rNv/35VI+8F7doB8qFecAeM=
 github.com/dfuse-io/dbin v0.0.0-20200406215642-ec7f22e794eb h1:yrE/Ncb9PAjdN7w5Ixx47Oy1kQQdluBfuv7c8D9UaPQ=
 github.com/dfuse-io/dbin v0.0.0-20200406215642-ec7f22e794eb/go.mod h1:yMMhO8IdiSS+R/961s9Ac1oyAx3MdAO0OneSZ9Wt/Wg=
 github.com/dfuse-io/derr v0.0.0-20200406214256-c690655246a1 h1:ejixSugMZ417KvnJhk4cZJu/VW4ql0AlL+seE4jh1Kc=
@@ -110,6 +112,8 @@ github.com/dfuse-io/pbgo v0.0.6-0.20200407175820-b82ffcb63bf6 h1:q0W224B3z0BK4a4
 github.com/dfuse-io/pbgo v0.0.6-0.20200407175820-b82ffcb63bf6/go.mod h1:thG/VHT3fqEpuhfxNA7psbzizGgJ3kSCM0rSUZ/LNaQ=
 github.com/dfuse-io/pbgo v0.0.6-0.20200415053022-5b009da68d9c h1:lfRo7VohqPM3q9qrlAtZyhWJu2aiT12f8Rrk43A7eCg=
 github.com/dfuse-io/pbgo v0.0.6-0.20200415053022-5b009da68d9c/go.mod h1:thG/VHT3fqEpuhfxNA7psbzizGgJ3kSCM0rSUZ/LNaQ=
+github.com/dfuse-io/pbgo v0.0.6-0.20200722182828-c2634161d5a3 h1:WPl4jzZH6z5RvCUal/vIfw/dukIDcvZszFO+ZhK24/k=
+github.com/dfuse-io/pbgo v0.0.6-0.20200722182828-c2634161d5a3/go.mod h1:dbo6DfMDndlPjbJSTZ7Vw/25oKfKg3zzuia+RseeMkU=
 github.com/dfuse-io/shutter v1.4.1-0.20200319040708-c809eec458e6 h1:Vywa3C2D8QE/QEMinbE61eGW0L9lNPa/x3PLle41ZLc=
 github.com/dfuse-io/shutter v1.4.1-0.20200319040708-c809eec458e6/go.mod h1:2mLf0v+n8J8NI7F6L6avYaRNfa6XECB6CP3WO8rRx88=
 github.com/dgraph-io/badger/v2 v2.0.3/go.mod h1:3KY8+bsP8wI0OEnQJAKpd4wIJW/Mm32yw2j/9FUVnIM=
