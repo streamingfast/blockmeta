@@ -107,6 +107,7 @@ func setupServer() (*server, *fakeDB, *bstream.TestSource) {
 	srcFactory.NewSourceFromRef(bstream.NewBlockRefFromID("00000001a"), frkable)
 	src := <-srcFactory.Created
 	s.src = src
+	go src.Run()
 	go s.launch()
 	s.ready.Store(true)
 	return s, db, src

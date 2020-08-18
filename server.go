@@ -150,6 +150,8 @@ func (s *server) setupSource(initialStartBlock bstream.BlockRef) {
 	handler := bstream.Handler(s)
 	forkable := forkable.New(handler, forkable.WithLogger(zlog), forkable.WithInclusiveLIB(initialStartBlock))
 	s.src = bstream.NewEternalSource(sf, forkable, bstream.EternalSourceWithLogger(zlog))
+	s.src.OnTerminating(func(err error) { s.Shutdown(err) })
+	s.OnTerminating(s.src.Shutdown)
 }
 
 func (s *server) ProcessBlock(block *bstream.Block, obj interface{}) error {
@@ -183,7 +185,7 @@ func (s *server) ProcessBlock(block *bstream.Block, obj interface{}) error {
 				s.libLock.Unlock()
 				s.ready.Store(true)
 			} else if block.Num() == bstream.GetProtocolFirstStreamableBlock && block.PreviousID() == s.initialStartBlockID {
-				zlog.Info("starting on first streamable block with LIB set to genesis block")
+				zlog.Info("starting on first streamable block with LIB set to genesis block, setting ready")
 				s.libLock.Lock()
 				s.lib = &bstream.Block{
 					Id:     s.initialStartBlockID,
@@ -224,12 +226,15 @@ func (s *server) BootstrapAndLaunch() error {
 	}
 	s.blockstreamConn = blockstreamConn
 
-	initialStartBlock, err := s.getInitialStartBlock()
-	if err != nil {
-		return err
-	}
-	s.initialStartBlockID = initialStartBlock.ID()
-	s.setupSource(initialStartBlock)
+	go func() {
+		initialStartBlock, err := s.getInitialStartBlock()
+		if err != nil {
+			return
+		}
+		s.initialStartBlockID = initialStartBlock.ID()
+		s.setupSource(initialStartBlock)
+		s.src.Run()
+	}()
 	return s.launch()
 }
 
@@ -239,11 +244,7 @@ func (s *server) launch() error {
 	s.gs = dgrpc.NewServer(dgrpc.WithLogger(zlog))
 	s.OnTerminating(func(err error) {
 		s.gs.Stop()
-		s.src.Shutdown(err)
 	})
-	s.src.OnTerminating(func(err error) { s.Shutdown(err) }) // make sure source shutdown will kill grpc server too
-
-	go s.src.Run()
 
 	lis, err := net.Listen("tcp", s.addr)
 	if err != nil {
@@ -251,8 +252,6 @@ func (s *server) launch() error {
 	}
 
 	pbhealth.RegisterHealthServer(s.gs, s)
-	zlog.Info("ready to serve")
-
 	pbblockmeta.RegisterBlockIDServer(s.gs, s)
 	pbblockmeta.RegisterTimeToIDServer(s.gs, s)
 	pbblockmeta.RegisterChainDiscriminatorServer(s.gs, s)
