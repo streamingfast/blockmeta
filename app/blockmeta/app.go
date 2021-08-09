@@ -20,8 +20,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dfuse-io/blockmeta"
-	"github.com/dfuse-io/blockmeta/metrics"
+	"github.com/streamingfast/blockmeta"
+	"github.com/streamingfast/blockmeta/metrics"
 	"github.com/dfuse-io/bstream"
 	"github.com/dfuse-io/dgrpc"
 	"github.com/dfuse-io/dmetrics"

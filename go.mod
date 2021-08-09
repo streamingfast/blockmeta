@@ -1,4 +1,4 @@
-module github.com/dfuse-io/blockmeta
+module github.com/streamingfast/blockmeta
 
 require (
 	github.com/dfuse-io/bstream v0.0.2-0.20200724164826-46514ddda736

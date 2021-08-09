@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dfuse-io/blockmeta/metrics"
+	"github.com/streamingfast/blockmeta/metrics"
 	"github.com/dfuse-io/bstream"
 	"github.com/dfuse-io/bstream/blockstream"
 	"github.com/dfuse-io/bstream/forkable"
