@@ -28,7 +28,7 @@ import (
 	"github.com/dfuse-io/derr"
 	"github.com/dfuse-io/dgrpc"
 	"github.com/dfuse-io/dstore"
-	"github.com/dfuse-io/kvdb"
+	"github.com/streamingfast/kvdb"
 	"github.com/dfuse-io/logging"
 	pbblockmeta "github.com/dfuse-io/pbgo/dfuse/blockmeta/v1"
 	pbbstream "github.com/dfuse-io/pbgo/dfuse/bstream/v1"
