@@ -3,10 +3,9 @@ module github.com/streamingfast/blockmeta
 go 1.15
 
 require (
-	github.com/dfuse-io/bstream v0.0.2-0.20210810190138-350cae1f54d8
+	github.com/dfuse-io/bstream v0.0.2-0.20210810193659-788cf4d32e16
 	github.com/dfuse-io/dbin v0.0.0-20200406215642-ec7f22e794eb // indirect
 	github.com/dfuse-io/dhammer v0.0.0-20201127174908-667b90585063 // indirect
-	github.com/dfuse-io/dmetrics v0.0.0-20200406214800-499fc7b320ab
 	github.com/dfuse-io/dstore v0.1.0 // indirect
 	github.com/dfuse-io/jsonpb v0.0.0-20200406211248-c5cf83f0e0c0 // indirect
 	github.com/dfuse-io/logging v0.0.0-20210109005628-b97a57253f70
@@ -16,11 +15,12 @@ require (
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/rs/xid v1.2.1 // indirect
 	github.com/streamingfast/derr v0.0.0-20210810022442-32249850a4fb
-	github.com/streamingfast/dgrpc v0.0.0-20210810185305-905172f728e8 // indirect
-	github.com/streamingfast/dstore v0.1.1-0.20210810110932-928f221474e4 // indirect
+	github.com/streamingfast/dgrpc v0.0.0-20210810185305-905172f728e8
+	github.com/streamingfast/dmetrics v0.0.0-20210810172555-564d623b116f
+	github.com/streamingfast/dstore v0.1.1-0.20210810110932-928f221474e4
 	github.com/streamingfast/kvdb v0.0.2-0.20210809203849-c1762028eb64
 	github.com/streamingfast/opaque v0.0.0-20210809210154-b964592beb5d // indirect
-	github.com/streamingfast/shutter v1.5.0 // indirect
+	github.com/streamingfast/shutter v1.5.0
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/gjson v1.5.0 // indirect
 	go.uber.org/atomic v1.6.0
