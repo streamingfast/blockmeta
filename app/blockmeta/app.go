@@ -20,8 +20,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/streamingfast/blockmeta"
-	"github.com/streamingfast/blockmeta/metrics"
 	"github.com/dfuse-io/bstream"
 	"github.com/dfuse-io/dgrpc"
 	"github.com/dfuse-io/dmetrics"
@@ -29,6 +27,8 @@ import (
 	pbbstream "github.com/dfuse-io/pbgo/dfuse/bstream/v1"
 	pbhealth "github.com/dfuse-io/pbgo/grpc/health/v1"
 	"github.com/dfuse-io/shutter"
+	"github.com/streamingfast/blockmeta"
+	"github.com/streamingfast/blockmeta/metrics"
 	"go.uber.org/zap"
 )
 
@@ -68,7 +68,13 @@ func (a *App) Run() error {
 		return fmt.Errorf("failed setting up blocks store: %w", err)
 	}
 
-	s := blockmeta.NewServer(a.config.GRPCListenAddr, a.config.BlockStreamAddr, blocksStore, a.db, a.config.Protocol)
+	s := blockmeta.NewServer(
+		a.config.GRPCListenAddr,
+		a.config.BlockStreamAddr,
+		blocksStore,
+		a.db,
+		a.config.Protocol,
+	)
 
 	a.OnTerminating(func(err error) {
 		s.Shutdown(err)

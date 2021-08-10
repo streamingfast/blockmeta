@@ -4,7 +4,6 @@ go 1.15
 
 require (
 	github.com/dfuse-io/bstream v0.0.2-0.20200724164826-46514ddda736
-	github.com/dfuse-io/derr v0.0.0-20200406214256-c690655246a1
 	github.com/dfuse-io/dgrpc v0.0.0-20200406214416-6271093e544c
 	github.com/dfuse-io/dmetrics v0.0.0-20200406214800-499fc7b320ab
 	github.com/dfuse-io/dstore v0.1.0
@@ -16,7 +15,8 @@ require (
 	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/rs/xid v1.2.1 // indirect
-	github.com/streamingfast/kvdb v0.0.2-0.20210809203849-c1762028eb64 // indirect
+	github.com/streamingfast/derr v0.0.0-20210810022442-32249850a4fb
+	github.com/streamingfast/kvdb v0.0.2-0.20210809203849-c1762028eb64
 	github.com/stretchr/testify v1.4.0
 	github.com/tidwall/gjson v1.5.0 // indirect
 	go.uber.org/atomic v1.6.0

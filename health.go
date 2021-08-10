@@ -18,12 +18,11 @@ import (
 	"context"
 
 	pbhealth "github.com/dfuse-io/pbgo/grpc/health/v1"
-	"github.com/dfuse-io/derr"
 )
 
 func (s *server) Check(ctx context.Context, in *pbhealth.HealthCheckRequest) (*pbhealth.HealthCheckResponse, error) {
 	status := pbhealth.HealthCheckResponse_NOT_SERVING
-	if s.ready.Load() && !derr.IsShuttingDown() {
+	if s.ready.Load() && !s.IsTerminating() {
 		status = pbhealth.HealthCheckResponse_SERVING
 	}
 
