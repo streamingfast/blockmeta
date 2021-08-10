@@ -10,7 +10,6 @@ require (
 	github.com/dfuse-io/dstore v0.1.0 // indirect
 	github.com/dfuse-io/jsonpb v0.0.0-20200406211248-c5cf83f0e0c0 // indirect
 	github.com/dfuse-io/logging v0.0.0-20210109005628-b97a57253f70
-	github.com/dfuse-io/opaque v0.0.0-20210108174126-bc02ec905d48 // indirect
 	github.com/dfuse-io/pbgo v0.0.6-0.20210810190312-2053a3b38779
 	github.com/golang/protobuf v1.3.5
 	github.com/gorilla/mux v1.7.3 // indirect
