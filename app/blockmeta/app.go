@@ -26,7 +26,7 @@ import (
 	"github.com/streamingfast/dstore"
 	pbbstream "github.com/dfuse-io/pbgo/dfuse/bstream/v1"
 	pbhealth "github.com/dfuse-io/pbgo/grpc/health/v1"
-	"github.com/dfuse-io/shutter"
+	"github.com/streamingfast/shutter"
 	"github.com/streamingfast/blockmeta"
 	"github.com/streamingfast/blockmeta/metrics"
 	"go.uber.org/zap"
