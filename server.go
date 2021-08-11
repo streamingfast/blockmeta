@@ -26,7 +26,7 @@ import (
 	"github.com/streamingfast/bstream/forkable"
 	"github.com/streamingfast/dgrpc"
 	"github.com/streamingfast/dstore"
-	"github.com/dfuse-io/logging"
+	"github.com/streamingfast/logging"
 	pbblockmeta "github.com/streamingfast/pbgo/dfuse/blockmeta/v1"
 	pbbstream "github.com/streamingfast/pbgo/dfuse/bstream/v1"
 	pbheadinfo "github.com/streamingfast/pbgo/dfuse/headinfo/v1"
