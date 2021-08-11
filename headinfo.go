@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	pbheadinfo "github.com/dfuse-io/pbgo/dfuse/headinfo/v1"
+	pbheadinfo "github.com/streamingfast/pbgo/dfuse/headinfo/v1"
 	"github.com/golang/protobuf/ptypes"
 	tspb "github.com/golang/protobuf/ptypes/timestamp"
 	"go.uber.org/zap"

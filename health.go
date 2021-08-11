@@ -17,7 +17,7 @@ package blockmeta
 import (
 	"context"
 
-	pbhealth "github.com/dfuse-io/pbgo/grpc/health/v1"
+	pbhealth "github.com/streamingfast/pbgo/grpc/health/v1"
 )
 
 func (s *server) Check(ctx context.Context, in *pbhealth.HealthCheckRequest) (*pbhealth.HealthCheckResponse, error) {
