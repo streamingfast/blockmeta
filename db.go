@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/dfuse-io/bstream"
+	"github.com/streamingfast/bstream"
 )
 
 var ErrDBOutOfSync = errors.New("database is out of sync")

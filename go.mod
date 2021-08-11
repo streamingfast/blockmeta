@@ -3,7 +3,6 @@ module github.com/streamingfast/blockmeta
 go 1.15
 
 require (
-	github.com/dfuse-io/bstream v0.0.2-0.20210811160908-fc6cb0861d48
 	github.com/dfuse-io/dbin v0.0.0-20200406215642-ec7f22e794eb // indirect
 	github.com/dfuse-io/dgrpc v0.0.0-20210810041652-d033fee35ae0 // indirect
 	github.com/dfuse-io/dmetrics v0.0.0-20200406214800-499fc7b320ab // indirect
@@ -12,6 +11,7 @@ require (
 	github.com/dfuse-io/logging v0.0.0-20210109005628-b97a57253f70
 	github.com/golang/protobuf v1.3.5
 	github.com/rs/xid v1.2.1 // indirect
+	github.com/streamingfast/bstream v0.0.2-0.20210811172811-82db64e6763f // indirect
 	github.com/streamingfast/derr v0.0.0-20210810022442-32249850a4fb
 	github.com/streamingfast/dgrpc v0.0.0-20210811160823-a39dfa7fff0d
 	github.com/streamingfast/dmetrics v0.0.0-20210810172555-564d623b116f
