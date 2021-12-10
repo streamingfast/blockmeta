@@ -20,15 +20,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/streamingfast/blockmeta"
+	"github.com/streamingfast/blockmeta/metrics"
 	"github.com/streamingfast/bstream"
 	"github.com/streamingfast/dgrpc"
 	"github.com/streamingfast/dmetrics"
 	"github.com/streamingfast/dstore"
-	pbbstream "github.com/streamingfast/pbgo/dfuse/bstream/v1"
 	pbhealth "github.com/streamingfast/pbgo/grpc/health/v1"
+	pbbstream "github.com/streamingfast/pbgo/sf/bstream/v1"
 	"github.com/streamingfast/shutter"
-	"github.com/streamingfast/blockmeta"
-	"github.com/streamingfast/blockmeta/metrics"
 	"go.uber.org/zap"
 )
 

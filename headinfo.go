@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"time"
 
-	pbheadinfo "github.com/streamingfast/pbgo/dfuse/headinfo/v1"
 	"github.com/golang/protobuf/ptypes"
 	tspb "github.com/golang/protobuf/ptypes/timestamp"
+	pbheadinfo "github.com/streamingfast/pbgo/sf/headinfo/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )

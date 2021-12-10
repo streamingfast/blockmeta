@@ -24,8 +24,8 @@ import (
 
 	"github.com/streamingfast/bstream"
 	"github.com/streamingfast/bstream/forkable"
-	pbblockmeta "github.com/streamingfast/pbgo/dfuse/blockmeta/v1"
-	pbbstream "github.com/streamingfast/pbgo/dfuse/bstream/v1"
+	pbblockmeta "github.com/streamingfast/pbgo/sf/blockmeta/v1"
+	pbbstream "github.com/streamingfast/pbgo/sf/bstream/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
