@@ -163,14 +163,14 @@ func (s *server) ProcessBlock(block *bstream.Block, obj interface{}) error {
 		s.forkDBRef = fObj.ForkDB
 	}
 
-	switch fObj.Step {
-	case forkable.StepNew, forkable.StepRedo:
+	switch fObj.Step() {
+	case bstream.StepNew, bstream.StepRedo:
 		s.headLock.Lock()
 		s.headBlock = block
 		s.headLock.Unlock()
 		s.mapLock.Lock()
 		defer s.mapLock.Unlock()
-		zlog.Debug("processing new/redo block", zap.Uint64("block_num", block.Num()), zap.String("step", fObj.Step.String()))
+		zlog.Debug("processing new/redo block", zap.Uint64("block_num", block.Num()), zap.String("step", fObj.Step().String()))
 		metrics.MapSize.Inc()
 		metrics.HeadBlockNumber.SetUint64(block.Num())
 		metrics.HeadTimeDrift.SetBlockTime(blockTime)
@@ -197,15 +197,15 @@ func (s *server) ProcessBlock(block *bstream.Block, obj interface{}) error {
 
 		}
 
-	case forkable.StepUndo:
+	case bstream.StepUndo:
 		s.mapLock.Lock()
 		defer s.mapLock.Unlock()
 
 		metrics.MapSize.Dec()
 		delete(s.blockTimes, blockID)
 
-	case forkable.StepIrreversible:
-		zlog.Debug("processing irreversible block", zap.Uint64("block_num", block.Num()), zap.String("step", fObj.Step.String()))
+	case bstream.StepIrreversible:
+		zlog.Debug("processing irreversible block", zap.Uint64("block_num", block.Num()), zap.String("step", fObj.Step().String()))
 		if !s.ready.Load() && blockID == s.initialStartBlockID {
 			zlog.Info("seen initial start block, setting ready")
 			s.ready.Store(true)
