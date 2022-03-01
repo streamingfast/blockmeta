@@ -3,7 +3,7 @@ module github.com/streamingfast/blockmeta
 go 1.15
 
 require (
-	github.com/streamingfast/bstream v0.0.2-0.20220120223941-1839129eec9d
+	github.com/streamingfast/bstream v0.0.2-0.20220301153811-b8a6af964e31
 	github.com/streamingfast/derr v0.0.0-20210811180100-9138d738bcec
 	github.com/streamingfast/dgrpc v0.0.0-20220301153539-536adf71b594
 	github.com/streamingfast/dmetrics v0.0.0-20210811180524-8494aeb34447

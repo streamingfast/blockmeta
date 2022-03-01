@@ -422,8 +422,12 @@ github.com/spf13/pflag v1.0.3/go.mod h1:DYY7MBk1bdzusC3SYhjObp+wFpr4gzcvqqNjLnIn
 github.com/spf13/viper v1.3.2/go.mod h1:ZiWeW+zYFKm7srdB9IoDzzZXaJaI5eL9QjNiN/DMA2s=
 github.com/streamingfast/atm v0.0.0-20211217182254-d1ed00f538eb h1:JsOT6L0BJ1WMXzrevZvo02NibpdOVslB3AA/2B45WH0=
 github.com/streamingfast/atm v0.0.0-20211217182254-d1ed00f538eb/go.mod h1:iISPGAstbUsPgyC3auLLi7PYUTi9lHv5z0COam0OPOY=
+github.com/streamingfast/atm v0.0.0-20220131151839-18c87005e680 h1:fGJnUx0shX9Y312QOlz+/+yLquihXRhNqctJ26jtZZM=
+github.com/streamingfast/atm v0.0.0-20220131151839-18c87005e680/go.mod h1:iISPGAstbUsPgyC3auLLi7PYUTi9lHv5z0COam0OPOY=
 github.com/streamingfast/bstream v0.0.2-0.20220120223941-1839129eec9d h1:IRqfpbTinFJEVxHc9vT+q58pDHgipdaT9vie1pOscR0=
 github.com/streamingfast/bstream v0.0.2-0.20220120223941-1839129eec9d/go.mod h1:eZj+vovnWEvfJZ1aiV2JEjUQVXzgI+IvvN6zg87yaug=
+github.com/streamingfast/bstream v0.0.2-0.20220301153811-b8a6af964e31 h1:rStVDOhBKzuMOjYt9x3pRCBs+SNKbte6rew/6CvktWA=
+github.com/streamingfast/bstream v0.0.2-0.20220301153811-b8a6af964e31/go.mod h1:xQkNT7Wkkd7g5IgnYMXp2W0HkTLO1w/nRsd5bRTf29c=
 github.com/streamingfast/dbin v0.0.0-20210809205249-73d5eca35dc5 h1:m/3aIPNXCwZ9m/dfYdOs8ftrS7GJl82ipVr6K2aZiBs=
 github.com/streamingfast/dbin v0.0.0-20210809205249-73d5eca35dc5/go.mod h1:YStE7K5/GH47JsWpY7LMKsDaXXpMLU/M26vYFzXHYRk=
 github.com/streamingfast/derr v0.0.0-20210810022442-32249850a4fb/go.mod h1:zL7vriSdKmvbNntPVlXzPDizifaTwUv6+1TGp6KdO88=
