@@ -19,11 +19,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
-	tspb "github.com/golang/protobuf/ptypes/timestamp"
 	pbheadinfo "github.com/streamingfast/pbgo/sf/headinfo/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var BlockNumToIDFromAPI func(ctx context.Context, blockNum uint64) (string, error)
@@ -56,18 +55,12 @@ func (s *server) headInfoFromLocal() (*pbheadinfo.HeadInfoResponse, error) {
 	lib := s.lib
 	s.libLock.RUnlock()
 
-	headTimestamp, err := ptypes.TimestampProto(head.Time())
-	if err != nil {
-		zlog.Error("invalid timestamp conversion from head block", zap.Error(err))
-		return nil, err
-	}
-
 	hi := &pbheadinfo.HeadInfoResponse{
 		LibNum:   lib.Num(),
 		LibID:    lib.ID(),
 		HeadNum:  head.Num(),
 		HeadID:   head.ID(),
-		HeadTime: headTimestamp,
+		HeadTime: timestamppb.New(head.Time()),
 	}
 	zlog.Debug("head info from local returning", zap.Reflect("head_info", hi))
 	return hi, nil
@@ -89,25 +82,16 @@ func headInfoFromBlockstream(ctx context.Context, conn *grpc.ClientConn) (*pbhea
 	zlog.Info("got head info lib from cli", zap.Uint64("lib_num", hi.LibNum), zap.String("lib_id", hi.LibID), zap.String("head_id", hi.HeadID), zap.Uint64("head_num", hi.HeadNum))
 
 	if hi.LibID == "" {
-		for {
-			apiHeadInfo, err := GetHeadInfoFromAPI(ctx)
-			if err != nil {
-				return nil, err
-			}
-			hi = apiHeadInfo
-			break
+		apiHeadInfo, err := GetHeadInfoFromAPI(ctx)
+		if err != nil {
+			return nil, err
 		}
+		hi = apiHeadInfo
 	}
 	zlog.Debug("head info from stream returning", zap.Uint64("lib_block_num", hi.LibNum), zap.String("lib_id", hi.LibID))
 	return hi, nil
 }
 
-func Timestamp(ts *tspb.Timestamp) time.Time {
-	t, _ := ptypes.Timestamp(ts)
-	return t
-}
-
-func TimestampProto(t time.Time) *tspb.Timestamp {
-	out, _ := ptypes.TimestampProto(t)
-	return out
+func TimestampProto(t time.Time) *timestamppb.Timestamp {
+	return timestamppb.New(t)
 }

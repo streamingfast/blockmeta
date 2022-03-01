@@ -30,7 +30,6 @@ import (
 	"github.com/streamingfast/dstore"
 	"github.com/streamingfast/kvdb"
 	"github.com/streamingfast/logging"
-	pbhealth "github.com/streamingfast/pbgo/grpc/health/v1"
 	pbblockmeta "github.com/streamingfast/pbgo/sf/blockmeta/v1"
 	pbbstream "github.com/streamingfast/pbgo/sf/bstream/v1"
 	pbheadinfo "github.com/streamingfast/pbgo/sf/headinfo/v1"
@@ -39,7 +38,9 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	pbhealth "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type server struct {
@@ -506,7 +507,7 @@ func (s *server) At(ctx context.Context, in *pbblockmeta.TimeRequest) (*pbblockm
 	zlogger := logging.Logger(ctx, zlog)
 
 	metrics.RequestCount.Inc()
-	reqTime := Timestamp(in.Time)
+	reqTime := in.Time.AsTime()
 	var foundID string
 	var err error
 
@@ -555,7 +556,7 @@ func (s *server) After(ctx context.Context, in *pbblockmeta.RelativeTimeRequest)
 		return nil, err
 	}
 	metrics.RequestCount.Inc()
-	reqTime := Timestamp(in.Time)
+	reqTime := in.Time.AsTime()
 
 	var foundID string
 	var foundBlockTime time.Time
@@ -581,7 +582,7 @@ func (s *server) After(ctx context.Context, in *pbblockmeta.RelativeTimeRequest)
 			irreversible = true
 		}
 
-		return &pbblockmeta.BlockResponse{Id: foundID, Time: TimestampProto(foundBlockTime), Irreversible: irreversible}, nil
+		return &pbblockmeta.BlockResponse{Id: foundID, Time: timestamppb.New(foundBlockTime), Irreversible: irreversible}, nil
 	}
 
 	if reqTime.After(lowestTimeInMap) || reqTime.Equal(lowestTimeInMap) {
@@ -594,7 +595,7 @@ func (s *server) After(ctx context.Context, in *pbblockmeta.RelativeTimeRequest)
 		metrics.ErrorCount.Inc()
 		return nil, err
 	}
-	return &pbblockmeta.BlockResponse{Id: id, Time: TimestampProto(bt), Irreversible: true}, nil
+	return &pbblockmeta.BlockResponse{Id: id, Time: timestamppb.New(bt), Irreversible: true}, nil
 }
 
 func (s *server) Before(ctx context.Context, in *pbblockmeta.RelativeTimeRequest) (*pbblockmeta.BlockResponse, error) {
@@ -602,7 +603,7 @@ func (s *server) Before(ctx context.Context, in *pbblockmeta.RelativeTimeRequest
 		return nil, err
 	}
 	metrics.RequestCount.Inc()
-	reqTime := Timestamp(in.Time)
+	reqTime := in.Time.AsTime()
 
 	var foundID string
 	var foundBlockTime time.Time
@@ -626,7 +627,7 @@ func (s *server) Before(ctx context.Context, in *pbblockmeta.RelativeTimeRequest
 		if foundBlockTime.Before(libTime) || foundBlockTime.Equal(libTime) {
 			irreversible = true
 		}
-		return &pbblockmeta.BlockResponse{Id: foundID, Time: TimestampProto(foundBlockTime), Irreversible: irreversible}, nil
+		return &pbblockmeta.BlockResponse{Id: foundID, Time: timestamppb.New(foundBlockTime), Irreversible: irreversible}, nil
 	}
 
 	id, bt, err := s.db.BlockIDBefore(ctx, reqTime, in.Inclusive)
@@ -635,5 +636,5 @@ func (s *server) Before(ctx context.Context, in *pbblockmeta.RelativeTimeRequest
 		return nil, err
 	}
 
-	return &pbblockmeta.BlockResponse{Id: id, Time: TimestampProto(bt), Irreversible: true}, nil
+	return &pbblockmeta.BlockResponse{Id: id, Time: timestamppb.New(bt), Irreversible: true}, nil
 }

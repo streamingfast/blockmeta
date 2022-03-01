@@ -26,10 +26,10 @@ import (
 	"github.com/streamingfast/dgrpc"
 	"github.com/streamingfast/dmetrics"
 	"github.com/streamingfast/dstore"
-	pbhealth "github.com/streamingfast/pbgo/grpc/health/v1"
 	pbbstream "github.com/streamingfast/pbgo/sf/bstream/v1"
 	"github.com/streamingfast/shutter"
 	"go.uber.org/zap"
+	pbhealth "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 var StartupAborted = fmt.Errorf("blockmeta start aborted by terminating signal")
